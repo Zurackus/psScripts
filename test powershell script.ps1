@@ -1,5 +1,9 @@
-#test powershell script
+#Powershell scripting Notes
+
 get-netipconfiguration
-#Testing
-#More testing of the changes
-#work test
+
+'''
+lots of notes here
+'''
+
+enter-pssession -computername 10.40.0.159
