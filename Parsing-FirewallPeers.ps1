@@ -11,6 +11,15 @@ Hashing      : IKEv1: (1)SHA1  IPsecOverNatT: (1)SHA1
 Bytes Tx     : 257532170              Bytes Rx     : 153046045
 Login Time   : 03:57:56 PDT Fri Apr 24 2020
 Duration     : 7h:24m:57s
+
+Connection   : {ip*:216.54.236.201}
+Index        : 2924                   IP Addr      : 216.54.236.201
+Protocol     : IKEv1 IPsec
+Encryption   : IKEv1: (1)AES256  IPsec: (2)3DES
+Hashing      : IKEv1: (1)SHA1  IPsec: (2)SHA1
+Bytes Tx     : 0                      Bytes Rx     : 13028252
+Login Time   : 18:28:20 PDT Mon Apr 13 2020
+Duration     : 13d 17h:54m:47s
 '@
 
 #explode file with template
