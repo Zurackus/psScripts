@@ -25,4 +25,4 @@ ADFSToolbox
 '''
 #Simple Commands
     #Remote to PC
-enter-pssession -computername 10.40.0.159
+enter-pssession -computername 10.40.1.171
