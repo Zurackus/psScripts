@@ -15,3 +15,7 @@ Invoke-Command  -ComputerName HRGW0521-5 -ScriptBlock{Stop-Process -Name msiexec
 
 Get-Process -ComputerName HRGW0521-5 -Name "msiexec"
 
+
+
+
+
