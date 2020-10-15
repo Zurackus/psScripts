@@ -1,5 +1,5 @@
-$machine = "10.20.20.215"
-$port = 8080
+$machine = "10.42.10.58"
+$port = 3389
 
 while ((Test-NetConnection $machine -Port $port).TcpTestSucceeded -eq $False) {
   Write-Host "Waiting..."
@@ -7,8 +7,3 @@ while ((Test-NetConnection $machine -Port $port).TcpTestSucceeded -eq $False) {
 }
 
 Write-Host "Port is up"
-
-
-Import-Module SkypeOnlineConnector
-$sfbSession = New-CsOnlineSession
-Import-PSSession $sfbSession
