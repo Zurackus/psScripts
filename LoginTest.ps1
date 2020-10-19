@@ -15,3 +15,4 @@ Select-Object -Property TimeCreated, LogName,
                         ID, Message | 
 Sort-Object -Property TimeCreated -Descending | 
 Select-Object -First 1
+
