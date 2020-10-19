@@ -16,7 +16,6 @@ Connect-MsolService
     #Here are the one off exclusions for MFA
     $FilteredUsers2 = $FilteredUsers |
         Where {$_.UserPrincipalName -ne "unifiedmessaging@hrgpros.onmicrosoft.com"} |
-        Where {$_.UserPrincipalName -ne "finvestigation@hrgpros.com"} |
         Where {$_.UserPrincipalName -ne "spmarketplace@hrgpros.onmicrosoft.com"} |
         Where {$_.UserPrincipalName -ne "sharepointjobapplications@hrgpros.onmicrosoft.com"}
 
