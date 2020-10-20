@@ -1,7 +1,8 @@
 <#
-
-Install-Module -Name "PSWriteColor"
-Import-Module PSWriteColor
+Module's required to run this script
+Install-Module -Name PSWriteColor
+Install-Module -Name Vmware.powercli
+Drop the VMware.hv.helper into the x64 module folder
 
 #>
 
@@ -13,7 +14,6 @@ Import-Module VMware.Hv.Helper
 write-host "`n"
 write-host "`n"
 Write-Host "        HELPDESK TASK TREE        " -foregroundcolor Yellow -BackgroundColor DarkGreen
-
 
 function Get-MainMenu {
     write-host "`n"
@@ -62,7 +62,8 @@ do {
 
     try{
        
-        connect-hvserver vhrgcb-03.corp.hrg -user $UN -password $PW -domain 'hrg' 
+        connect-hvserver vhrgcb-03.corp.hrg -user tkonsonlas -password Training365! -domain 'hrg'
+        #connect-hvserver vhrgcb-03.corp.hrg -user $UN -password $PW -domain 'hrg' 
         $success = $true
         write-host "`n"
         Write-Host "Login successful"

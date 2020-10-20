@@ -1,11 +1,10 @@
 ﻿#Get list of User accounts that have password never expires enabled
 
 #All except disabled accounts/roles
-$search1 = Search-ADAccount -PasswordNeverExpires -UsersOnly -ResultPageSize 2000 -resultSetSize $null | Select-Object Name, SamAccountName, DistinguishedName | where-object {$_.distinguishedname -notlike "*disabled*" -and $_.distinguishedname -notlike "*roleaccounts*"} | Export-CSV “C:\Scripts\PassNeverExpiresAccounts.CSV” -NoTypeInformation
+$search1 = Search-ADAccount -PasswordNeverExpires -UsersOnly -ResultPageSize 2000 -resultSetSize $null | Select-Object Name, SamAccountName, DistinguishedName | where-object {$_.distinguishedname -notlike "*disabled*" -and $_.distinguishedname -notlike "*roleaccounts*"} | Export-CSV “.\PassNeverExpiresAccounts.CSV” -NoTypeInformation
 $search1
 #^remake with get-aduser
 Get-ADUser -Filter {(Enabled -eq $TRUE) -and (PasswordNeverExpires -eq $TRUE)} -ResultPageSize 2000 -Properties Name, SamAccountName, LastLogonDate, passwordlastset, distinguishedname | where-object {$_.distinguishedname -notlike "*disabled*" -and $_.distinguishedname -notlike "*roleaccounts*"}
-
 
 #Only accounts in clientportalnonemployee (tab2)
 $search2 = Search-ADAccount -PasswordNeverExpires -UsersOnly -ResultPageSize 2000 -resultSetSize $null | Select-Object Name, SamAccountName, DistinguishedName | where-object {$_.distinguishedname -like "*ClientPortalNonEmployee*" -and $_.distinguishedname -notlike "*disabled*" -and $_.distinguishedname -notlike "*roleaccounts*"} | Export-CSV “C:\Scripts\PassNeverExpiresAccounts-OnlyClientPortal.CSV” -NoTypeInformation
@@ -20,4 +19,4 @@ Get-ADUser -Filter {(Enabled -eq $TRUE) -and (PasswordNeverExpires -eq $TRUE)} -
 
 
 ####Testing####
-get-aduser -Identity jediaz -Properties *
+#get-aduser -Identity jediaz -Properties *
