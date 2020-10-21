@@ -1,5 +1,6 @@
 ﻿#Script to Force MFA
 #Must connect to Microsoft Online Service
+function Enable-AzureMFA {
 Connect-MsolService
 
 [int] $MaxResults = 2000
@@ -34,7 +35,7 @@ foreach ($user in $users)
     $sta = @($st)
     Set-MsolUser -UserPrincipalName $user -StrongAuthenticationRequirements $sta
 }
-
+}
 
 #Check to see who has MFA 'forced' and 'waiting'
 <#

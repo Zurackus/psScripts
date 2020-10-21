@@ -1,5 +1,10 @@
 #Master list of all Basic PowerShell functions
 
+function enable-AzureMFA {
+.$PSScriptRoot\enable-AzureMFA.ps1
+}
+Export-ModuleMember function enable-AzureMFA
+
 #Pull all users who are currently enabled
 function get-ADenabled {
     get-aduser -filter "(enabled -eq 'true')" -properties title, company, department,officephone, canonicalname, whencreated, officephone,office,mail,lastlogontimestamp,employeeID | export-csv ".\ADenabled.csv" 
@@ -30,9 +35,9 @@ function get-ADnologgin60days {
     Get-ADUser -Filter {(Enabled -eq $TRUE) -and (PasswordNeverExpires -eq $TRUE)} -Properties Name,SamAccountName,LastLogonDate,DistinguishedName | Where {($_.LastLogonDate -le $60Days) -and ( $_.distinguishedname -notlike "*roleaccounts*") -and ( $_.distinguishedname -notlike "*sccm*")} | Sort | Select Name,SamAccountName,LastLogonDate,DistinguishedName | Export-Csv ".\PassNeverExpiresAccounts-Over60days.CSV" -NoTypeInformation
 }
 
-
+<#
 #Remotely get a running Process
 Invoke-Command  -ComputerName HRGW0521-5 -ScriptBlock{Get-Process -Name "*msi*"}
 #Remotely stop a process
-Invoke-Command  -ComputerName <#HRGW0521-5#> -ScriptBlock{Stop-Process -Name "*msi*"}
-
+Invoke-Command  -ComputerName HRGW0521-5 -ScriptBlock{Stop-Process -Name "*msi*"}
+#>
