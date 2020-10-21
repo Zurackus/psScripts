@@ -1,3 +1,0 @@
-Setting up powershell(After setting up VS Code)
-Check the current 'Execution Policy'
-Get-
