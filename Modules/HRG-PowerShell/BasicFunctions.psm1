@@ -12,9 +12,17 @@ function get-ADdisabled {
 
 #Pull all users who have a password that does not expire
 function get-ADPasswordNeverExpires {
-
     get-aduser -Filter {(Enabled -eq $TRUE) -and (PasswordNeverExpires -eq $TRUE)} -ResultPageSize 2000 -Properties Name, SamAccountName, LastLogonDate, passwordlastset, distinguishedname | where-object {$_.distinguishedname -notlike "*disabled*" -and $_.distinguishedname -notlike "*roleaccounts*"} | export-csv ".\PassNeverExpiresAccounts.CSV"
 }
+
+<#
+# ---csv---
+#SamAccountName
+#user1
+#user2
+#user3
+import-csv "C:\Users\tkonsonlas\OneDrive - Healthcare Resource Group, Inc\Documents\AD.csv" | ForEach-Object {Set-ADUser -Identity $_.SamAccountName -PasswordNeverExpires:$FALSE}
+#>
 
 #Pull all users who have not logged in for the last 60 days
 function get-ADnologgin60days {
