@@ -1,5 +1,9 @@
-﻿#Script to Force MFA
-#Must connect to Microsoft Online Service
+﻿#Scripts around AzureMFA(MultiFactor Authentication)
+#Enable-AzureMFA - Force MFA on all HRG users
+#Get-AzureMFAcsv - Check to see who has MFA 'forced' and 'waiting'
+#Requires -Modules AzureAD
+
+#Force MFA on all HRG users
 function Enable-AzureMFA {
 Connect-MsolService
 
@@ -38,7 +42,7 @@ foreach ($user in $users)
 }
 
 #Check to see who has MFA 'forced' and 'waiting'
-<#
+function Get-AzureMFAcsv {
 Connect-MsolService
 
 [int] $MaxResults = 2000
@@ -51,5 +55,4 @@ Connect-MsolService
         @{Name = 'MFAWaiting'; Expression={if ($_.StrongAuthenticationMethods -like "*") {Write-Output $true} else {Write-Output $false}}}
 
         Write-Output $AllUsers | Sort-Object MFAForced, MFAWaiting, isAdmin | export-csv ".\AzureMFA.csv"
-
-#>
+}
