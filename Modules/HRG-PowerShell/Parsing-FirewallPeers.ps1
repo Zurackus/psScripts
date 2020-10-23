@@ -27,3 +27,9 @@ $listexploded=Get-Content -Path "C:\ScriptData\peercheck.txt" | ConvertFrom-Stri
 
 #export csv 
 $listexploded | Export-Csv -Path "C:\ScriptData\peerOut.csv" -NoTypeInformation
+
+<#
+    $AllUsers = Get-MsolUser -MaxResults $MaxResults | Where-Object {$_.IsLicensed -eq $isLicensed} | select UserPrincipalName,
+            #Adding a column for finding if the users have MFA forced on them
+        @{Name = 'MFAForced'; Expression={if ($_.StrongAuthenticationRequirements) {Write-Output $true} else {Write-Output $false}}}
+#>
