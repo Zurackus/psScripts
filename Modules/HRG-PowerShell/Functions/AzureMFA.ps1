@@ -55,4 +55,5 @@ Connect-MsolService
         @{Name = 'MFAWaiting'; Expression={if ($_.StrongAuthenticationMethods -like "*") {Write-Output $true} else {Write-Output $false}}}
 
         Write-Output $AllUsers | Sort-Object MFAForced, MFAWaiting, isAdmin | export-csv ".\AzureMFA.csv"
+        Write-host -object 'File has been dropped in the folder this script was called from'
 }

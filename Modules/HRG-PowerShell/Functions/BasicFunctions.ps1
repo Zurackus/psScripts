@@ -1,9 +1,5 @@
 #Master list of all Basic PowerShell functions
 
-function enable-AzureMFA {
-.$PSScriptRoot\enable-AzureMFA.ps1
-}
-Export-ModuleMember function enable-AzureMFA
 
 #Pull all users who are currently enabled
 function get-ADenabled {
