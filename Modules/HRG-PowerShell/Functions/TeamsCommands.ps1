@@ -5,7 +5,7 @@
 #https://docs.microsoft.com/en-us/powershell/module/skype/?view=skype-ps
 #Microsoft Teams
 #https://docs.microsoft.com/en-us/powershell/teams/?view=teams-ps
-#Requires -Modules MicrosftTeams
+#Require module MicrosftTeams
 
 #Command to Connect to Microsoft Teams
 function Connect2Teams {
