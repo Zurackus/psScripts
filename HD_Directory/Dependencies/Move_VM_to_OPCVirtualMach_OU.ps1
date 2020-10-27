@@ -37,7 +37,12 @@ If ($Exists){
     if (Get-ADComputer "CN=$mainMachine,OU=OPCVirtualMach,dc=corp,dc=hrg" -ErrorAction SilentlyContinue){
         write-host "`n"
         Write-Color "    $mainMachine has successfully been moved into OPCVirtualMach OU."
-        
+
+        $curDate = Get-Date -UFormat "%m.%d.%y"
+        $NotesTemp = (Get-VM $mainMachine | Select-Object -ExpandProperty Notes)
+        $AD_OU_change = "Moved to OPCVirtualMach OU - $curDate - $UN"
+        Set-VM $mainMachine -Notes "$($AD_OU_change)`n$($NotesTemp)" -Confirm:$false
+
     } else {
         write-host "`n"
         Write-Color "    Transfer Failed." -Color Green

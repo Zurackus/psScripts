@@ -1,23 +1,48 @@
 <#
-Module's required to run this script
-Install-Module -Name PSWriteColor
-Install-Module -Name Vmware.powercli
-Drop the VMware.hv.helper into the x64 module folder
+
+*GUI colors here
+Install-Module -Name "PSWriteColor"
+Import-Module PSWriteColor
+
+*copy vmware.hv.helper to 
+C:\Program Files (x86)\WindowsPowerShell\Modules\ and 
+C:\Program Files\WindowsPowerShell\Modules
+Import-Module -Name VMware.Hv.Helper
+
+*install powercli module
+Find-Module -Name VMware.PowerCLI
+Install-Module -Name VMware.PowerCLI -Scope CurrentUser
+Get-Command -Module *VMWare*
+
+*active directory module - download appropriate file from link and install
+https://www.microsoft.com/en-us/download/details.aspx?id=45520
+
+*sccm module download here
+https://www.microsoft.com/en-us/download/details.aspx?id=45520
+
+
 #>
+
 #import sccm module
 import-module 'C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1'
 #import the vmware horizon view helper
 Import-Module VMware.Hv.Helper
 
-write-host "`n`n"
+write-host "`n"
+write-host "`n"
 Write-Host "        HELPDESK TASK TREE        " -foregroundcolor Yellow -BackgroundColor DarkGreen
+
+
 function Get-MainMenu {
-    Write-Host "`n    TASK MENU`n" -foregroundcolor Yellow -BackgroundColor DarkGreen
+    write-host "`n"
+    Write-Host "    TASK MENU" -foregroundcolor Yellow -BackgroundColor DarkGreen
+    write-host "`n"
     Write-Color "1.  ", "View Current set variables" -Color Yellow, Green
     Write-Color "2.  ", "Clear Machine and Username" -Color Yellow, Green
     Write-Color "3.  ", "Username search/set" -Color Yellow, Green
     Write-Color "4.  ", "Machine search/set" -Color Yellow, Green
-    Write-Color "`n5.  ", "SCCM Scripts" -Color Yellow, Green
+    write-host "`n"
+    Write-Color "5.  ", "SCCM Scripts" -Color Yellow, Green
     Write-Color "6.  ", "Power Options" -Color Yellow, Green
     Write-Color "7.  ", "Network Options" -Color Yellow, Green
     Write-Color "8.  ", "Active Directory Tasks" -Color Yellow, Green
@@ -26,46 +51,68 @@ function Get-MainMenu {
     Write-Color "11. ", "Move VM to OPCVirtualMach OU" -Color Yellow, Green
     Write-Color "12. ", "New - VM - Replace E1000E NIC with VMXNET 3 NIC" -Color Yellow, Green
     Write-Color "13. ", "Extend VM Disk Volume" -Color Yellow, Green
-    Write-Color "14. ", "Entitlements/VM assignments`n" -Color Yellow, Green
+    Write-Color "14. ", "Entitlements/VM assignments" -Color Yellow, Green
+    write-host "`n"
+    Write-Color "15. ", "Vcenter Login" -Color Yellow, Green
+    Write-Color "16. ", "New VM Setup" -Color Yellow, Green
+    write-host "`n"
+
 }
 
 function Set-MainUserName {
     $global:mainUserName = Read-Host "Enter username (function)"
+
 }
 
 function Set-MainMachine {
     $global:mainMachine = Read-Host "Enter machine (function)"
+
 }
 
+function Set-LoginCreds {
+    
 $count = 0
+
 do {
+
     write-host "`n"
-    $UN = Read-Host "Username"
-    $PW = Read-Host "Password" -AsSecureString
+    $global:UN = Read-Host "Username"
+    $global:PW = Read-Host "Password" -AsSecureString
     Write-Host "$Path"
-    $global:UN = $UN
-    $global:PW = $PW
+#    $global:UN = $UN
+#    $global:PW = $PW
     write-host "`n"
+
     try{
-        connect-hvserver vhrgcb-03.corp.hrg -user $UN -password $PW -domain 'hrg' 
+       
+        connect-hvserver vhrgcb-03.corp.hrg -user $global:UN -password $global:PW -domain 'hrg' 
         $success = $true
         write-host "`n"
         Write-Host "Login successful"
+
     }
     catch {
         write-host = "Login failure, please try again."
+
     }
+
     $count++
-} until ($count -eq 3 -or $success)
+} until ($count -eq 2 -or $success)
+
 if(-not($success)) {
-    Read-Host "Exits"
+    Read-Host "Exit"
 }
+}
+
+Set-LoginCreds
 
 Get-MainMenu
 
 while (($var = Read-Host -Prompt "Enter Number for Selection or Q to quit") -ne 'Q')
     {
+
 switch ($var) {
+
     1 {
         Write-Host "    Current set variables" -foregroundcolor Yellow -BackgroundColor DarkGreen
         write-host "`n"
@@ -76,6 +123,7 @@ switch ($var) {
         Write-Color "   Current set Machine is ", "$global:mainMachine" -Color Green, Red
         Get-MainMenu
         }
+
     2 {
         $global:mainMachine = $null
         $global:mainUserName = $null
@@ -84,7 +132,9 @@ switch ($var) {
         Write-Host "    Set username and machine have been cleared."
         write-host "`n"
         Get-MainMenu
+    
         }
+            
     3 {
         write-host "`n"
         Write-Color "  Search and Set(1) or Set(2)      " -Color Green -NoNewLine
@@ -204,64 +254,115 @@ switch ($var) {
     5 {
         $powerPath = $PSScriptRoot + "\Dependencies"
         .$powerPath\SCCM_scripts.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
 #       .\Dependencies\SCCM_scripts.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
         Get-MainMenu
     }
+
     6 { 
         $powerPath = $PSScriptRoot + "\Dependencies"
         .$powerPath\VM_Power_Script.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
 #        .\Dependencies\VM_Power_Script.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
         Get-MainMenu
     }
+
     7 { 
         $powerPath = $PSScriptRoot + "\Dependencies"
         .$powerPath\Network_Options.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
         Get-MainMenu
     }
+
     8 { 
         $powerPath = $PSScriptRoot + "\Dependencies"
         .$powerPath\AD_unlock_account.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
 #        .\Dependencies\AD_unlock_account.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
         Get-MainMenu
     }
+    
     9 { 
         $powerPath = $PSScriptRoot + "\Dependencies"
         .$powerPath\Helix2.0Delete.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
 #       .\Dependencies\Helix2.0Delete.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
         Get-MainMenu
     }
+    
     10 { 
         $powerPath = $PSScriptRoot + "\Dependencies"
         .$powerPath\vm_file_migration_script.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
 #       .\Dependencies\vm_file_migration_script.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
         Get-MainMenu
     }
+    
     11 { 
         $powerPath = $PSScriptRoot + "\Dependencies"
         .$powerPath\Move_VM_to_OPCVirtualMach_OU.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
 #        .\Dependencies\Move_VM_to_OPCVirtualMach_OU.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
         Get-MainMenu
     }
+    
     12 {
         $powerPath = $PSScriptRoot + "\Dependencies"
         .$powerPath\NewVM_Change_Network_Card.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
 #        .\Dependencies\NewVM_Change_Network_Card.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
         Get-MainMenu
     }
+
     13 {
         $powerPath = $PSScriptRoot + "\Dependencies"
         .$powerPath\vm_extend_disk.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
  #       .\Dependencies\vm_extend_disk.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
         Get-MainMenu
     }
+
     14 {
         $powerPath = $PSScriptRoot + "\Dependencies"
-        .$powerPath\user_pool_vm_assignment_management.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+        .$powerPath\user_pool_vm_assignment_management.ps1 -UN $global:UN -PW $global:PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
 #        .\Dependencies\user_pool_vm_assignment_management.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
         Get-MainMenu
     }
+    15{
+        try{
+       
+            connect-hvserver vhrgcb-03.corp.hrg -user $global:UN -password $global:PW -domain 'hrg' 
+            $success = $true
+            write-host "`n"
+            Write-Host "Login successful"
+    
+        }
+        catch {
+            write-host = "Login failure, please exit this session and try again."
+    
+        }
+    }
+
+    16 {
+        $powerPath = $PSScriptRoot + "\Dependencies"
+        .$powerPath\new_vm_setup.ps1 -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
+
+        Get-MainMenu
+
+    }
+
     Default {Write-Host "Unable to Proceed"}
 }
     }
+
+
+
+
 
 Read-Host -Prompt "Press Enter to exit"

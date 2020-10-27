@@ -9,9 +9,10 @@ Param (
     [string]$mainUserName
         
 )
+
 write-host "`n"
-Write-Color "   Logged in Username:     ", "$UN" -Color White, Green
-Write-Color "   PW                      ", "$PW" -Color White, Green
+Write-Color "   Logged in Username:     ", "$global:UN" -Color White, Green
+Write-Color "   PW                      ", "$global:PW" -Color White, Green
 write-host "`n"
 Write-Color "   Session Username:       ", "$mainUserName" -Color White, Red
 Write-Color "   Session Machine:        ", "$mainMachine" -Color White, Red
@@ -26,15 +27,19 @@ Import-Module VMware.Hv.Helper
 write-host "`n"
 
 Write-Host "        Vcenter Admin - user and machine pools/management      " -foregroundcolor Yellow -BackgroundColor DarkGreen
-write-host "`n"
 if (!$mainMachine) {
+    write-host "`n"
     $mainMachine = Read-Host '      Enter Computer Name'
 }
-write-host "`n"
+
 if (!$mainUserName) {
+    write-host "`n"
     $mainUserName = Read-Host '     Enter Username'
 }
-connect-hvserver vhrgcb-03.corp.hrg -user $UN -password $PW -domain 'hrg'
+
+
+
+#connect-hvserver vhrgcb-03.corp.hrg -user $UN -password $PW -domain 'hrg'
 
 
 
@@ -131,27 +136,53 @@ switch ($var) {
         Set-HVMachine -MachineName "$mainMachine1" -User "corp.hrg\$mainUserName1"
         write-host "`n"
         Write-Host "           User-Machine Assignment Complete"
-        Get-EntitlementMenu
+
+        $curDate = Get-Date -UFormat "%m.%d.%y"
+        $NotesTemp = (Get-VM $mainMachine1 | Select-Object -ExpandProperty Notes)
+        $dept = Get-ADUser $U -Properties MemberOf,Department
+        $department = $dept.department
+        $userMachineUpdate = "$mainUserName1 - $department"
+        Set-VM $mainMachine1 -Notes "$($userMachineUpdate)`n$($NotesTemp)" -Confirm:$false
 
         # ALTER CODE IN THIS SECTION TO BE MORE USER FRIENDLY AND HAVE BETTER FLOW
+
+        Get-EntitlementMenu
+
         }
     4 {
         write-host "`n"
         Write-Host "            ADD VM TO DESKTOP POOL"
         write-host "`n"
         Write-Host "            Available Pools"
-        get-hvpoolsummary | Out-Gridview
         write-host "`n"
         $mainMachine2 = Read-Host "Enter vm to add to vmware Admin"
         write-host "`n"
+        Start-Sleep -s 3
+        get-hvpoolsummary | Out-Gridview
+        Start-Sleep -s 3
         $desktopPool = Read-Host "Enter desired pool for vm"
+
         write-host "`n"
+        write-host "Assigning pool..."
+        write-host "`n"        
+
         Add-HVDesktop -Poolname "$desktopPool" -machines "$mainMachine2"
+
+        write-host "`n"
+        Start-Sleep -s 3
+        Write-Host "Updating VM Notes..."
+        Start-Sleep -s 3
+
+        $NotesTemp = (Get-VM $mainMachine2 | Select-Object -ExpandProperty Notes)
+        $desktopPool = (get-hvmachine -machinename "$mainMachine2").base.desktopname
+        $userMachineUpdate = "Assigned VM Pool - $desktopPool"
+        Set-VM $mainMachine2 -Notes "$($userMachineUpdate)`n$($NotesTemp)" -Confirm:$false
+
+
         write-host "`n"
         Write-Host "           Machine-Pool Assignment Complete"
         write-host "`n"
-        (get-hvmachine -machinename "$mainMachine"2).base | Select-Object desktopname
-        write-host "`n"
+        Write-Host $desktopPool
         Get-EntitlementMenu
 
     }
@@ -188,7 +219,11 @@ switch ($var) {
         Add-HVDesktop -Poolname "$desktopPool" -machines "$mainMachine5"
 
         Start-Sleep -s 10
-        (get-hvmachine -machinename "$mainMachine5").base | Select-Object desktopname
+        (get-hvmachine -machinename "$mainMachine5").base.desktopname
+
+        $NotesTemp = (Get-VM $mainMachine5 | Select-Object -ExpandProperty Notes)
+        $userMachineUpdate = "$Desktop Pool - $desktopPool"
+        Set-VM $mainMachine5 -Notes "$($userMachineUpdate)`n$($NotesTemp)" -Confirm:$false
 
         write-host "`n"
         Write-Host "           Re-assignment complete"
@@ -198,7 +233,9 @@ switch ($var) {
     8 {
         write-host "`n"
         Write-Host "            Check VM Pool assignment"
-        (get-hvmachine -machinename "$mainMachine").base | Select-Object desktopname
+        write-host "`n"
+        $pool = (get-hvmachine -machinename "$mainMachine").base.desktopname
+        Write-Host "$mainMachine assigned pool is $pool"
         write-host "`n"
         Get-EntitlementMenu
         }
