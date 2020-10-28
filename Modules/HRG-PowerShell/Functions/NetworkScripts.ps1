@@ -30,3 +30,22 @@ $port_arr = @(443, 80, 3389, 9100)
       Test-NetConnection $machine -port $port -InformationLevel Quiet
   }
 }
+
+function Test-NetConPrimaryHIM {
+  $count = 2
+  $HIMaddress = "10.40.4."
+  #do {
+      $iphost = $HIMaddress +$count
+      if(Test-Connection $iphost -Quiet)
+        {
+          $success = $true
+          $PCname = Resolve-DnsName $iphost | select NameHost
+          Invoke-Command -ComputerName $PCname 
+        }
+      $count++
+  #} until ($count -eq 254 -or $success)
+  
+  
+}
+
+$PCname = Test-Connection 10.40.4.2 | select Source
