@@ -37,3 +37,10 @@ Invoke-Command  -ComputerName HRGW0521-5 -ScriptBlock{Get-Process -Name "*msi*"}
 #Remotely stop a process
 Invoke-Command  -ComputerName HRGW0521-5 -ScriptBlock{Stop-Process -Name "*msi*"}
 #>
+
+function get-VPNtunnels {
+    #PSScript does not work with F8
+    $dir = $PSScriptRoot + "\NetworkingTest.py"
+    #Calling a python script
+    python $dir
+}
