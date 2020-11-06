@@ -8,16 +8,19 @@ user = getpass.getuser()
 #Prompts for the password
 pwd = getpass.getpass('Password:')
 #Store the device information
-Suite500 = {
+ASA_VPN = {
     'device_type': 'cisco_ios',
-    'host': '172.30.254.213',
+    'host': '192.168.205.3',
     'username': user,
     'password': pwd,
+    'secret' : pwd,
 }
 #setup the connection to the device within a session 'net_connect'
-net_connect = ConnectHandler(**Suite500)
+net_connect = ConnectHandler(**ASA_VPN)
+#elavate to enabled mode
+net_connect.enable()
 #Send a command to the device, and store in 'result'
-result = net_connect.send_command("show ip int brief", delay_factor=2, use_textfsm=True)
+result = net_connect.send_command("show vpn-sessiondb detail l2l")# ,use_textfsm=True
 #Disconnect from the device
 net_connect.disconnect()
 
