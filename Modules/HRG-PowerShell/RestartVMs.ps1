@@ -17,7 +17,7 @@ Select @{N='VM';E={$_.Entity.Name}},
 
 #Filter the previous array down to just the VM's greater than X days
 $VMupXdays = $AllVMuptime |
-    Where {$_.UptimeDays -gt 60<#Number of days since last reboot#>} |
+    Where {$_.UptimeDays -gt 1<#Number of days since last reboot#>} |
     Export-Csv -Path "\\hrgatad\I\Helpdesk\VMRestartList.csv"
 
 #Restart each VM in the Xdays array
