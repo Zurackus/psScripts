@@ -23,7 +23,7 @@ print ('\n### Connecting to the ASA ###\n')
 #net_connect = ConnectHandler(**ASA_VPN)
 #show vpn-sessiondb detail l2l (sh vpn- de l2)
 #show int ip brief
-command = 'show vpn-sessiondb detail l2l'
+command = 'show running-config tunnel-group'
 
 with ConnectHandler(**ASA_VPN) as net_connect:
     #elavate to enabled mode
@@ -39,4 +39,4 @@ l = len(result)
 
 print('\n##################################################')
 for i in range (0,l):
-    print(result[i]['connection'] + ' ' + result[i]['protocol'])
+    print(result[i]['name'])

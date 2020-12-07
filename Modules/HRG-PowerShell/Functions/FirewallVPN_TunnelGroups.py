@@ -29,10 +29,8 @@ with ConnectHandler(**ASA_VPN) as net_connect:
     #elavate to enabled mode
     net_connect.enable()
     #Send a command to the device, and store in 'result'
-    print(net_connect.find_prompt())
+    net_connect.find_prompt()
     result = net_connect.send_command(command, use_textfsm=True)#,delay_factor=2
-
-print(result)
 
 print('\n##################################################\n')
     #Convert to Pandas Data Frame
@@ -43,7 +41,7 @@ cols_to_keep = ['name']
 secondDF = firstDF[cols_to_keep]
 #uniquePeers = secondDF['connection'].unique()
 secondDF.insert(1,'Date',datetime.datetime.today().strftime('%m/%d/%Y'))
-ciscoDF = secondDF.drop_duplicates('connection',keep='first')
+ciscoDF = secondDF.drop_duplicates('name',keep='first')
     #Open the original csv with existing data
 ciscoDF.to_csv('TunnelGroups.csv',index = False)
 print('Done')
