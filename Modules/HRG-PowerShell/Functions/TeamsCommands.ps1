@@ -13,3 +13,13 @@ function Connect2Teams {
     $sfbSession = New-CsOnlineSession
     Import-PSSession $sfbSession
 }
+
+<#
+Pull all users assigned Teams Phone numbers
+Get-CsOnlineUser | Where-Object  { $_.LineURI -notlike $null } | select UserPrincipalName, LineURI
+#>
+
+<#
+Set resource account Phone number
+Set-CsOnlineVoiceApplicationInstance -Identity HRG-CBOLine@hrgpros.onmicrosoft.com -TelephoneNumber +18332176620
+#>

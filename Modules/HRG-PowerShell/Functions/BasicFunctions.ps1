@@ -44,6 +44,12 @@ function get-VPN-TunnelGrous {
 #user2
 #user3
 import-csv "C:\Users\tkonsonlas\OneDrive - Healthcare Resource Group, Inc\Documents\AD.csv" | ForEach-Object {Set-ADUser -Identity $_.SamAccountName -PasswordNeverExpires:$FALSE}
+# ---csv---
+#SamAccountName OfficePhone
+#user1          Phone1
+#user2          Phone2
+#user3          Phone3
+import-csv "C:\Users\tkonsonlas\psScripts\PhoneNumberImport.csv" | ForEach-Object {Set-ADUser -Identity $_.SamAccountName -OfficePhone $_.OfficePhone}
 #>
 
 <#
