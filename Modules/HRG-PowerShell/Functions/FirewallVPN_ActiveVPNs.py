@@ -3,7 +3,7 @@
 import textfsm
 from netmiko import ConnectHandler
 import getpass
-import pandas as pd
+import pandas as pd #to read/manipulate JSON output
 import datetime
 
     #Pulls the local username

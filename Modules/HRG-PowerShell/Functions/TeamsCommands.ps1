@@ -16,7 +16,7 @@ function Connect2Teams {
 
 <#
 Pull all users assigned Teams Phone numbers
-Get-CsOnlineUser | Where-Object  { $_.LineURI -notlike $null } | select UserPrincipalName, LineURI
+Get-CsOnlineUser | Where-Object  { $_.LineURI -notlike $null } | select UserPrincipalName, LineURI | export-csv -path TeamsPeople.csv
 #>
 
 <#
