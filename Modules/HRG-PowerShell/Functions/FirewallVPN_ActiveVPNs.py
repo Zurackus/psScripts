@@ -20,6 +20,7 @@ ASA_VPN = {
     "secret" : pwd,
     "global_delay_factor" : 3,
 }
+
 print ('\n### Connecting to the ASA ###')
     #Command being sent to the network device
 command = ' show vpn-sessiondb detail l2l'

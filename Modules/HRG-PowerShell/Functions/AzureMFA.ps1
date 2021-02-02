@@ -39,6 +39,9 @@ foreach ($user in $users)
     $sta = @($st)
     Set-MsolUser -UserPrincipalName $user -StrongAuthenticationRequirements $sta
 }
+
+Write-Host 'Azure MFA has been enabled successfully'
+
 }
 
 #Check to see who has MFA 'forced' and 'waiting'

@@ -37,6 +37,59 @@ function get-VPN-TunnelGrous {
     python $dir
 }
 
+function Unlock-ADUser {
+$mainUserName = Read-Host 'Enter username'
+get-aduser $mainUserName -properties PasswordExpired, PasswordLastSet, PasswordNeverExpires, LockedOut
+Unlock-ADAccount -Identity $mainUserName
+}
+
+#Code to remotely reset a password even if the current password is expired
+function Set-PasswordRemotely {
+    [CmdletBinding(DefaultParameterSetName = 'Secure')]
+    param(
+        [Parameter(ParameterSetName = 'Secure', Mandatory)][string] $UserName,
+        [Parameter(ParameterSetName = 'Secure', Mandatory)][securestring] $OldPassword,
+        [Parameter(ParameterSetName = 'Secure', Mandatory)][securestring] $NewPassword,
+        [Parameter(ParameterSetName = 'Secure')][alias('DC', 'Server', 'ComputerName')][string] $DomainController
+    )
+    Begin {
+        $DllImport = @'
+[DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
+public static extern bool NetUserChangePassword(string domain, string username, string oldpassword, string newpassword);
+'@
+        $NetApi32 = Add-Type -MemberDefinition $DllImport -Name 'NetApi32' -Namespace 'Win32' -PassThru
+
+        if (-not $DomainController) {
+            if ($env:computername -eq $env:userdomain) {
+                # not joined to domain, lets prompt for DC
+                $DomainController = Read-Host -Prompt 'Domain Controller DNS name or IP Address'
+            } else {
+                $Domain = $Env:USERDNSDOMAIN
+                $Context = [System.DirectoryServices.ActiveDirectory.DirectoryContext]::new([System.DirectoryServices.ActiveDirectory.DirectoryContextType]::Domain, $Domain)
+                $DomainController = ([System.DirectoryServices.ActiveDirectory.DomainController]::FindOne($Context)).Name
+            }
+        }
+    }
+    Process {
+        if ($DomainController -and $OldPassword -and $NewPassword -and $UserName) {
+            $OldPasswordPlain = [System.Net.NetworkCredential]::new([string]::Empty, $OldPassword).Password
+            $NewPasswordPlain = [System.Net.NetworkCredential]::new([string]::Empty, $NewPassword).Password
+
+            $result = $NetApi32::NetUserChangePassword($DomainController, $UserName, $OldPasswordPlain, $NewPasswordPlain)
+            if ($result) {
+                Write-Host -Object "Set-PasswordRemotely - Password change for account $UserName failed on $DomainController. Please try again." -ForegroundColor Red
+            } else {
+                Write-Host -Object "Set-PasswordRemotely - Password change for account $UserName succeeded on $DomainController." -ForegroundColor Cyan
+            }
+        } else {
+            Write-Warning "Set-PasswordRemotely - Password change for account failed. All parameters are required. "
+        }
+    }
+}
+
+#Edit domain, username, oldpassword, newpassword - Password can not be expired
+#([adsi]'WinNT://domain/username,user').ChangePassword('oldpassword','newpassword')
+
 <#
 # ---csv---
 #SamAccountName
@@ -57,4 +110,15 @@ import-csv "C:\Users\tkonsonlas\psScripts\PhoneNumberImport.csv" | ForEach-Objec
 Invoke-Command  -ComputerName HRGW0521-5 -ScriptBlock{Get-Process -Name "*msi*"}
 #Remotely stop a process
 Invoke-Command  -ComputerName HRGW0521-5 -ScriptBlock{Stop-Process -Name "*msi*"}
+#>
+
+<#
+Update Username with msol module
+Connect-MsolService
+Set-MsolUserPrincipalName -UserPrincipalName "cegger@hrgpros.com" -NewUserPrincipalName "chines@hrgpros.com"
+#>
+
+<#
+Unlock SMB Share Access
+Get-SmbShare -Special $false | ForEach-Object { Unblock-SmbShareAccess -Name $_.Name -AccountName ‘tkyes’ -Force }
 #>
