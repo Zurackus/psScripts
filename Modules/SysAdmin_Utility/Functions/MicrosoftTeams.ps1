@@ -1,14 +1,16 @@
-#Command to Connect to Microsoft Teams
-function Connect2Teams {
+#71 Command to Connect to Microsoft Teams
+function Import-Teams {
     Import-Module MicrosoftTeams
     $sfbSession = New-CsOnlineSession
     Import-PSSession $sfbSession -AllowClobber
 }
 
-<#
-Pull all users assigned Teams Phone numbers
-Get-CsOnlineUser | Where-Object  { $_.LineURI -notlike $null } | select UserPrincipalName, LineURI | export-csv -path TeamsPeople.csv
-#>
+
+#72 Pull all users assigned Teams Phone numbers
+function Get-AssignedTeamsNum {
+$workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\TeamsPeople.csv'
+Get-CsOnlineUser | Where-Object  { $_.LineURI -notlike $null } | select UserPrincipalName, LineURI | export-csv -path $workOutput
+}
 
 <#
 Set resource account Phone number

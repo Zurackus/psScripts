@@ -1,0 +1,4 @@
+VSCode Notes
+ctrl+[ (Unindent all of selected code:multi-line)
+ctrl+] (Indent all of selected code:multi-line)
+

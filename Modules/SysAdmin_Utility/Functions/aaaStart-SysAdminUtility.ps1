@@ -56,20 +56,15 @@ function Set-LoginCreds {
 
 function Set-MainUserName {
     $global:mainUserName = Read-Host "Enter username (function)"
-
 }
 
 function Set-MainUserName2 ($UserTEST) {
     $global:mainUserName = $UserTEST
-
 }
 
 function Set-MainMachine ($VMTEST) {
     $global:mainMachine = $VMTEST
-
 }
 function Set-MainMachine2 {
     $global:mainMachine = Read-Host "Enter machine (function)"
-
-
 }

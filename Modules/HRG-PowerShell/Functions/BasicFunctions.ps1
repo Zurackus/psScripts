@@ -1,36 +1,38 @@
 #Master list of all Basic PowerShell functions
 
 #Pull all users who are currently enabled
-function get-ADenabled {
+function Get-ADenabled {
     $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\ADenabled.csv'
     get-aduser -filter "(enabled -eq 'true')" -properties title, company, department, officephone, canonicalname, whencreated, officephone, office, mail, lastlogontimestamp, employeeID | export-csv -path $workOutput
 }
 
 #Pull all users who are currently disabled
-function get-ADdisabled {
+function Get-ADdisabled {
     $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\ADdisabled.csv'
     get-aduser -filter "(enabled -eq 'false')" -properties title, company, department, officephone, canonicalname, whencreated, officephone, office, mail, lastlogontimestamp | export-csv -path $workOutput
 }
 
 #Pull all users who have a password that does not expire
-function get-ADPasswordNeverExpires {
-    get-aduser -Filter { (Enabled -eq $TRUE) -and (PasswordNeverExpires -eq $TRUE) } -ResultPageSize 2000 -Properties Name, SamAccountName, LastLogonDate, passwordlastset, distinguishedname | where-object { $_.distinguishedname -notlike "*disabled*" -and $_.distinguishedname -notlike "*roleaccounts*" } | export-csv ".\PassNeverExpiresAccounts.CSV"
+function Get-PasswordNeverExpires {
+    $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\PassNeverExpires.csv'
+    get-aduser -Filter { (Enabled -eq $TRUE) -and (PasswordNeverExpires -eq $TRUE) } -ResultPageSize 2000 -Properties Name, SamAccountName, LastLogonDate, passwordlastset, distinguishedname | where-object { $_.distinguishedname -notlike "*disabled*" -and $_.distinguishedname -notlike "*roleaccounts*" } | export-csv -path $workOutput
 }
 
 #Pull all users who have not logged in for the last 60 days
-function get-ADnologgin60days {
+function Get-NoLogIn60Days {
+    $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\NoLogIn60Days.csv'
     $60Days = (get-date).adddays(-60)
-    Get-ADUser -Filter { (Enabled -eq $TRUE) -and (PasswordNeverExpires -eq $TRUE) } -Properties Name, SamAccountName, LastLogonDate, DistinguishedName | Where { ($_.LastLogonDate -le $60Days) -and ( $_.distinguishedname -notlike "*roleaccounts*") -and ( $_.distinguishedname -notlike "*sccm*") } | Sort | Select Name, SamAccountName, LastLogonDate, DistinguishedName | Export-Csv ".\PassNeverExpiresAccounts-Over60days.CSV" -NoTypeInformation
+    Get-ADUser -Filter { (Enabled -eq $TRUE) -and (PasswordNeverExpires -eq $TRUE) } -Properties Name, SamAccountName, LastLogonDate, DistinguishedName | Where { ($_.LastLogonDate -le $60Days) -and ( $_.distinguishedname -notlike "*roleaccounts*") -and ( $_.distinguishedname -notlike "*sccm*") } | Sort | Select Name, SamAccountName, LastLogonDate, DistinguishedName | export-Csv -path $workOutput
 }
 
-function get-VPN-ActiveTunnels {
+function Get-VPNActiveTunnels {
     #PSScript does not work with F8
     $dir = $PSScriptRoot + "\FirewallVPN_ActiveVPNs.py"
     #Calling a python script
     python $dir
 }
 
-function get-VPN-TunnelGrous {
+function Get-VPNTunnelGroups {
     #PSScript does not work with F8
     $dir = $PSScriptRoot + "\FirewallVPN_TunnelGroups.py"
     #Calling a python script
@@ -43,7 +45,8 @@ get-aduser $mainUserName -properties PasswordExpired, PasswordLastSet, PasswordN
 Unlock-ADAccount -Identity $mainUserName
 }
 
-#Code to remotely reset a password even if the current password is expired
+<#
+Code to remotely reset a password even if the current password is expired
 function Set-PasswordRemotely {
     [CmdletBinding(DefaultParameterSetName = 'Secure')]
     param(
@@ -86,6 +89,7 @@ public static extern bool NetUserChangePassword(string domain, string username, 
         }
     }
 }
+#>
 
 #Edit domain, username, oldpassword, newpassword - Password can not be expired
 #([adsi]'WinNT://domain/username,user').ChangePassword('oldpassword','newpassword')
