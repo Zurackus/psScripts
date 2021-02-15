@@ -9,9 +9,8 @@ Set-LoginCreds
 #>
 
 function Start-SysAdminUtility {
-    Get-AllMods
-    #import-module 'C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1'
-    #Import-Module VMware.Hv.Helper
+    #Get-AllMods
+    Get-WorkFiles
     Set-ConsoleColor 'Black' 'Gray'
     Get-MainMenu
 }
@@ -39,7 +38,6 @@ function Get-AllMods {
 function Set-ConsoleColor ($bc, $fc) {
     $Host.UI.RawUI.BackgroundColor = $bc
     $Host.UI.RawUI.ForegroundColor = $fc
-    Clear-Host
 }
 
 function Set-LoginCreds {
@@ -73,5 +71,16 @@ function Set-CloudCreds {
         $global:Credential = Get-Credential
     }else {
         write-host "Cloud Credentials set"
+    }
+}
+
+function Get-WorkFiles {
+    $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles'
+    if(Test-Path -Path $workOutput) {
+        Write-Host "WorkFiles folder already exists"
+    }else {
+        New-Item -Path $env:LOCALAPPDATA -Name "WorkFiles" -ItemType "directory"
+        Write-Host "Workfiles Directory has been created"
+        Write-Host "Located in %LOCALAPPDATA%\WorkFiles"
     }
 }

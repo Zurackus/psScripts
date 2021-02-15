@@ -5,6 +5,7 @@ from netmiko import ConnectHandler
 import getpass
 import pandas as pd
 import datetime
+from os import path
 
     #Pulls the local username
 user = getpass.getuser()
@@ -43,6 +44,8 @@ secondDF = firstDF[cols_to_keep]
 secondDF.insert(1,'Date',datetime.datetime.today().strftime('%m/%d/%Y'))
 ciscoDF = secondDF.drop_duplicates('name',keep='first')
     #Open the original csv with existing data
-ciscoDF.to_csv('TunnelGroups.csv',index = False)
+workfiles = path.expandvars(r'%LOCALAPPDATA%\WorkFiles')
+ciscoDF.to_csv(workfiles+'\TunnelGroups.csv',index = False)
+
 print('Done')
 print('\n##################################################\n')

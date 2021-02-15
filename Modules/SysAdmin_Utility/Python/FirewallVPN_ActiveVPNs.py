@@ -5,6 +5,7 @@ from netmiko import ConnectHandler
 import getpass
 import pandas as pd #to read/manipulate JSON output
 import datetime
+from os import path
 
     #Pulls the local username
 user = getpass.getuser()
@@ -43,9 +44,12 @@ secondDF = firstDF[cols_to_keep]
 #uniquePeers = secondDF['connection'].unique()
 secondDF.insert(2,'Date',datetime.datetime.today().strftime('%m/%d/%Y'))
 ciscoDF = secondDF.drop_duplicates('connection',keep='first')
+
+workfiles = path.expandvars(r'%LOCALAPPDATA%\WorkFiles')
+
     #Open the original csv with existing data
-csvOpen = pd.read_csv("ciscoDF.csv")
+csvOpen = pd.read_csv(workfiles+"\ciscoDF.csv")
 final = pd.concat([csvOpen,ciscoDF])
-final.to_csv('ciscoDF.csv',index = False)
+final.to_csv(workfiles+'\ciscoDF.csv',index = False)
 print('Done')
 print('\n##################################################\n')
