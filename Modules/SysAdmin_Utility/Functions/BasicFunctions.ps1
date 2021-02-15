@@ -99,7 +99,7 @@ function Test-NetworkLoop {
     
 #22 Function to quickly test regularly used ports
 function Test-NetworkMulti {
-#Test Multiple ports once
+#Test Multiple ports at once
 $machine = Read-Host "IP to test"
 Write-Host -Object "`nOrder of checks:`nhttps - 443, http - 80, RDP - 3389, Printer - 9100`n"
 $port_arr = @(443, 80, 3389, 9100)
@@ -107,10 +107,17 @@ $port_arr = @(443, 80, 3389, 9100)
   foreach ($port in $port_arr) {
     Test-NetConnection $machine -port $port -InformationLevel Quiet
   }
+
 }
 
 #23
-enter-pssession -computername 10.40.1.171
+function FunctionName {
+  param (
+    $compName
+  )
+  enter-pssession -computername $compName  
+}
+
 
 <#
 function Test-NetConPrimaryHIM {

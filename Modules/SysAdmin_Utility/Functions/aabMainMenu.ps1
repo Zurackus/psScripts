@@ -16,13 +16,15 @@ function Show-OptionMenu {
     write-host "`n"
     Write-Color "   71. ", "Connect to Teams            ", "       72. ", "Get Assigned Teams Numbers" -Color Yellow, Green, Yellow, Green
     write-host "`n"
+    Write-Color "   91. ", "Connect to ExchangeOnline   ", "       92. ", "" -Color Yellow, Green, Yellow, Green
+    write-host "`n"
 }
 
 function Get-MainMenu {
     do{
         #The options are shown
         Show-OptionMenu
-        $input = Read-Host "what do you want to do?"
+        $input = Read-Host "Enter the number of your desired action: "
         switch ($input){#Functions that will be used based on the users selection
         '1' {   
             Write-Host "    Pulling the enabled users from AD" -Color Green
@@ -81,6 +83,12 @@ function Get-MainMenu {
             Get-VPNTunnelGroups
             Write-Color "   Completed" -Color Green
             }
+        '51'{
+            Write-Host "    Running Connect-AzureModule" -Color Green
+            write-host "`n"
+            Connect-AzureModule
+            Write-Color "   Completed" -Color Green
+            }
         '52'{
             Write-Host "    Running Enable-AzureMFA" -Color Green
             write-host "`n"
@@ -94,9 +102,9 @@ function Get-MainMenu {
             Write-Color "   Completed" -Color Green
             }
         '71'{
-            Write-Host "    Running Import-Teams" -Color Green
+            Write-Host "    Running Connect-TeamsModule" -Color Green
             write-host "`n"
-            Import-Teams
+            Connect-TeamsModule
             Write-Color "   Completed" -Color Green
             }
         '72'{
@@ -105,10 +113,10 @@ function Get-MainMenu {
             Get-AssignedTeamsNum
             Write-Color "   Completed" -Color Green
             }
-        'x'{
-            Write-Host "    Pulling a list of all Tunnel groups in OPC2" -Color Green
+        '91'{
+            Write-Host "    Running Connect-ExchangeModule" -Color Green
             write-host "`n"
-            Get-VPNTunnelGroups
+            Connect-ExchangeModule
             Write-Color "   Completed" -Color Green
             }
         'x' {

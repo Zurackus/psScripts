@@ -1,5 +1,5 @@
 #71 Command to Connect to Microsoft Teams
-function Import-Teams {
+function Connect-TeamsModule {
     Import-Module MicrosoftTeams
     $sfbSession = New-CsOnlineSession
     Import-PSSession $sfbSession -AllowClobber

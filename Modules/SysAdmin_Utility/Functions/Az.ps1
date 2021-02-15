@@ -1,12 +1,18 @@
-#Scripts around AzureMFA(MultiFactor Authentication)
+<#
+Scripts around AzureMFA(MultiFactor Authentication)
 #Enable-AzureMFA - Force MFA on all HRG users
 #Get-AzureMFAcsv - Check to see who has MFA 'forced' and 'waiting'
-#'Requires -Modules AzureAD
+#>
+
+#51 Connect to Az Module
+function Connect-AzureModule {
+    Import-Module -Name Az
+    Connect-AzAccount
+}
 
 #52 Force MFA on all HRG users
 function Enable-AzureMFA {
-Connect-MsolService
-
+#Connect-MsolService
 [int] $MaxResults = 2000
 [bool] $isLicensed = $true
 

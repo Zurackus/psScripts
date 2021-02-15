@@ -1,11 +1,15 @@
 #To require a module for a script to run you can add the below line
 #'Requires -Modules AzureAD'
 <# Modules
+Az
 AzureAD
 ExchangeOnlineManagement
 MSOnline
 ADFSToolbox
 #>
+#PS-Repository, accept current settings
+#Remove-Module <module-name>
+#$env:PSModulePath
 
 <# PSScriptroot #>
 $exportsPath = Join-Path $PSScriptRoot 'Functions.csv'
@@ -27,7 +31,6 @@ Write-Output "11.Enviroment Variable, Public :[$env:PUBLIC]"
 Write-Output "12.Enviroment Variable, AppData\Local\Temp :[$env:TEMP]"
 
 #$pshome -force
-
 
 <#
 Powershell Equivalent***
