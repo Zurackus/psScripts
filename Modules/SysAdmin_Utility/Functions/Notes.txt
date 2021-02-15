@@ -2,3 +2,4 @@ VSCode Notes
 ctrl+[ (Unindent all of selected code:multi-line)
 ctrl+] (Indent all of selected code:multi-line)
 
+Ctrl+Shift+P - Open Command Search

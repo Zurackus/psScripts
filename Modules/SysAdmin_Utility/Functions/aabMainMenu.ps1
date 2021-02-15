@@ -24,7 +24,7 @@ function Get-MainMenu {
     do{
         #The options are shown
         Show-OptionMenu
-        $input = Read-Host "Enter the number of your desired action: "
+        $input = Read-Host "`nEnter the number of your desired action: "
         switch ($input){#Functions that will be used based on the users selection
         '1' {   
             Write-Host "    Pulling the enabled users from AD" -Color Green
