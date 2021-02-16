@@ -176,3 +176,20 @@ Catch [System.Exception]{
 $Array | Out-GridView -Title "Results" 
 $Array | Export-Csv $env:userprofile\desktop\results.csv -Force -NoTypeInformation 
 #>
+
+<#
+function Get-MembersOfGroups {
+    param (
+        OptionalParameters
+    )
+    $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\GoupmemberShip.csv'
+    if (Test-Path -Path $workOutput) {
+        
+    }
+    $GroupList = "DCAnalyst", "DCManager"
+    foreach ($Group in $GroupList)
+    { 
+        Get-ADGroupMember $Group | Export-csv -Path $workOutput -Append
+    }
+}
+#>

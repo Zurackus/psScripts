@@ -84,18 +84,3 @@ function Get-WorkFiles {
         Write-Host "Located in %LOCALAPPDATA%\WorkFiles"
     }
 }
-
-function Get-MembersOfGroups {
-    param (
-        OptionalParameters
-    )
-    $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\GoupmemberShip.csv'
-    if (Test-Path -Path $workOutput) {
-        
-    }
-    $GroupList = "DCAnalyst", "DCManager"
-    foreach ($Group in $GroupList)
-    { 
-        Get-ADGroupMember $Group | Export-csv -Path $workOutput -Append
-    }
-}
