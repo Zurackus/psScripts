@@ -12,7 +12,7 @@ function Show-OptionMenu {
     Write-Color "   31. ", "Get-VPNActiveTunnels        ", "       32. ", "Get-VPNTunnelGroups" -Color Yellow, Green, Yellow, Green
     write-host "`n"
     Write-Color "   51. ", "Connect to Az               ", "       52. ", "Enable-AzureMFA" -Color Yellow, Green, Yellow, Green
-    Write-Color "   53. ", "Get-AzureMFAcsv             ", "       54. ", "" -Color Yellow, Green, Yellow, Green
+    Write-Color "   53. ", "Get-AzureMFAcsv             ", "       54. ", "Remove-HRGAzureResource" -Color Yellow, Green, Yellow, Green
     write-host "`n"
     Write-Color "   71. ", "Connect to Teams            ", "       72. ", "Get Assigned Teams Numbers" -Color Yellow, Green, Yellow, Green
     write-host "`n"
@@ -99,6 +99,12 @@ function Get-MainMenu {
             Write-Host "    Running Get-AzureMFAcsv" -Color Green
             write-host "`n"
             Get-AzureMFAcsv
+            Write-Color "   Completed" -Color Green
+            }
+        '54'{   
+            Write-Host "    Running Remove-HRGAzureResource" -Color Green
+            write-host "`n"
+            Remove-HRGAzureResource
             Write-Color "   Completed" -Color Green
             }
         '71'{
