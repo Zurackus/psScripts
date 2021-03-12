@@ -12,7 +12,7 @@ function Connect-AzureModule {
 
 #52 Force MFA on all HRG users
 function Enable-AzureMFA {
-#Connect-MsolService
+Connect-MsolService
 [int] $MaxResults = 2000
 [bool] $isLicensed = $true
 
@@ -167,3 +167,4 @@ else{
 Write-Host -ForegroundColor Red "The VM name entered doesn't exist in your connected Azure Tenant! Kindly check the name entered and restart the script with correct VM name..."
 }
 }
+

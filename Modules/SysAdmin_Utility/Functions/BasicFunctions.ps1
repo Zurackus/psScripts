@@ -35,10 +35,12 @@ function Unlock-ADUser {
     Unlock-ADAccount -Identity $mainUserName
 }
 
-<#
+
 #Get-MemberOf
-get-aduser -filter "(enabled -eq 'true')" -properties memberof | select name, @{ l="GroupMembership"; e={$_.memberof  -join ";"  } } | export-csv "C:\Users\tkonsonlas\OneDrive - Healthcare Resource Group, Inc-\AD3.csv"
-#>
+function Get-ADMembers {
+  $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\AD-GroupMembership.csv"'
+  get-aduser -filter "(enabled -eq 'true')" -properties memberof | select name, @{ l="GroupMembership"; e={$_.memberof  -join ";"  } } | export-csv Export-Csv -path $workOutput
+}
 
 <# Delete all Files in R:\SCANNED older than 30 day(s)
 function remove-oldfiles {

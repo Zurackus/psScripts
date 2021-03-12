@@ -56,6 +56,12 @@ function Get-MainMenu {
             Unlock-ADUser
             Write-Color "   Completed" -Color Green
             }
+        '6' {
+            Write-Host "    Running Get-ADMembers" -Color Green
+            write-host "`n"
+            Get-ADMembers
+            Write-Color "   Completed" -Color Green
+            }
         'x' {
             #Show-PowerMainMenu -UN $UN -PW $PW -mainMachine $global:mainMachine -mainUserName $global:mainUserName
             }
