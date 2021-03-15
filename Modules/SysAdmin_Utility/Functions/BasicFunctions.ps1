@@ -38,8 +38,8 @@ function Unlock-ADUser {
 
 #Get-MemberOf
 function Get-ADMembers {
-  $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\AD-GroupMembership.csv"'
-  get-aduser -filter "(enabled -eq 'true')" -properties memberof | select name, @{ l="GroupMembership"; e={$_.memberof  -join ";"  } } | export-csv Export-Csv -path $workOutput
+  $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\AD-GroupMembership.csv'
+  get-aduser -filter "(enabled -eq 'true')" -properties memberof | select name, @{ l="GroupMembership"; e={$_.memberof  -join ";"  } } | export-csv -path $workOutput
 }
 
 <# Delete all Files in R:\SCANNED older than 30 day(s)
@@ -118,6 +118,14 @@ function FunctionName {
     $compName
   )
   enter-pssession -computername $compName  
+}
+
+#Function to set AD password to something new
+function Set-ADPassword {
+  param (
+    OptionalParameters
+  )
+  Set-ADAccountPassword konsonlast -NewPassword (ConvertTo-SecureString -AsPlainText "Lionfish937#" -Force)
 }
 
 
