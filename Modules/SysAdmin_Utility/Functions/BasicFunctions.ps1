@@ -114,20 +114,8 @@ $port_arr = @(443, 80, 3389, 9100)
 
 #23
 function FunctionName {
-  param (
-    $compName
-  )
   enter-pssession -computername $compName  
 }
-
-#Function to set AD password to something new
-function Set-ADPassword {
-  param (
-    OptionalParameters
-  )
-  Set-ADAccountPassword konsonlast -NewPassword (ConvertTo-SecureString -AsPlainText "Lionfish937#" -Force)
-}
-
 
 <#
 function Test-NetConPrimaryHIM {

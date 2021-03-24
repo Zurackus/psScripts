@@ -168,3 +168,37 @@ Write-Host -ForegroundColor Red "The VM name entered doesn't exist in your conne
 }
 }
 
+
+function FunctionName {
+#This command uses MSOL to remove the licenses
+Connect-MsolService   
+#
+$users = Import-Csv -Path "C:\Users\tkonsonlas\Documents\users2.csv"       
+            
+foreach ($user in $users) {            
+ Set-MsolUserLicense -UserPrincipalName "$($user.samaccountname)" -RemoveLicenses "hrgpros:ENTERPRISEPACK"
+}
+<#
+Grab the below ID's with 'Get-MsolAccountSku'
+AccountSkuId                    ActiveUnits WarningUnits ConsumedUnits
+------------                    ----------- ------------ -------------
+hrgpros:VISIOCLIENT             10          0            8            
+hrgpros:POWER_BI_PRO            2           0            2            
+hrgpros:SPZA_IW                 10000       0            0            
+hrgpros:ENTERPRISEPACK          510         0            406          
+hrgpros:FLOW_FREE               10000       0            58           
+hrgpros:MCOEV                   255         0            229          
+hrgpros:MCOPSTN1                225         0            232          
+hrgpros:Win10_VDA_E3            230         0            0            
+hrgpros:PHONESYSTEM_VIRTUALUSER 10          0            4            
+hrgpros:POWERAPPS_VIRAL         10000       0            1            
+hrgpros:MEETING_ROOM            1           0            1            
+hrgpros:POWER_BI_STANDARD       1000000     0            15           
+hrgpros:MCOPSTNC                10000000    0            0            
+hrgpros:TEAMS_EXPLORATORY       100         0            2            
+hrgpros:EMS                     230         0            0            
+hrgpros:MCOMEETADV              65          0            13           
+hrgpros:SPE_E3                  280         0            134          
+hrgpros:PROJECTPROFESSIONAL     5           0            3  
+#>
+}
