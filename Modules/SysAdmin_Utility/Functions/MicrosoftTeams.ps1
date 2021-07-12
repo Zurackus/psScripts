@@ -21,3 +21,11 @@ Set-CsOnlineVoiceApplicationInstance -Identity HRG-CBOLine@hrgpros.onmicrosoft.c
 Set user phone number
 Set-CsOnlineVoiceUser -Identity <UserAccount> -TelephoneNumber <Number> -LocationID SpokaneValley_HQ
 #>
+
+<#
+Get-Team -DisplayName 'Information Systems'
+    GroupID/DisplayName/Visibility/Archived/MailNickName/Description
+
+Get-TeamChannel -GroupId 6f0be2ec-69d0-43f9-8f01-9af4ce426733
+#>
+
