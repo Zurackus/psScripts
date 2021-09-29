@@ -190,3 +190,7 @@ function Get-MembersOfGroups {
     }
 }
 #>
+
+#Test from a specific port
+Test-Connection -Source 10.40.4.140 -ComputerName 192.168.1.52
+Test-Connection -Source 10.40.0.234 -ComputerName 192.168.1.53
