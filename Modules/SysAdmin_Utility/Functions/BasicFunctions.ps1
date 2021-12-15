@@ -194,3 +194,16 @@ function Get-MembersOfGroups {
 #Test from a specific port
 Test-Connection -Source 10.40.4.140 -ComputerName 192.168.1.52
 Test-Connection -Source 10.40.0.234 -ComputerName 192.168.1.53
+
+
+
+function -SelfpayDB {
+Enter-PSSession -ComputerName vhrgihpe
+
+Get-SmbOpenFile | Where-Object {$_.Path -like "Q:\EMPLOYEE\SPAYDataBase\Supervisor Interface*"} | Close-SmbOpenFile -Force
+Start-Sleep -Seconds 1
+Copy-Item "Q:\EMPLOYEE\SPAYDataBase\back up-dont't touch please\Supervisor Interface-Current.accdb" "Q:\EMPLOYEE\SPAYDataBase\Supervisor Interface-Current.accdb"
+Rename-Item "Q:\EMPLOYEE\SPAYDataBase\Supervisor Interface-Current.accdb" "Supervisor Interface-testing.accdb"
+
+Exit-PSSession
+}
