@@ -18,3 +18,6 @@ $Perms = Get-ManagementRole -Cmdlet Set-UserPhoto
 $Perms | foreach {Get-ManagementRoleAssignment -Role $_.Name -Delegating $false | Format-Table -Auto Role,RoleAssigneeType,RoleAssigneeName}
 
 Add-RoleGroupMember "Organization Management" -Member drobertson@hrgpros.com
+
+#email being blocked by odd rule
+Get-TransportRule 7B066AB9-54FE-4699-B3A3-43E0C25259FA
