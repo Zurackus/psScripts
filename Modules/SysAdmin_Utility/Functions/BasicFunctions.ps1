@@ -211,3 +211,12 @@ Rename-Item "Q:\EMPLOYEE\SPAYDataBase\Supervisor Interface-Current.accdb" "Super
 
 Exit-PSSession
 }
+
+{
+$users = Import-Csv -Path C:\Users\tkonsonlas\Documents\Selfpay-users.csv            
+# Loop through CSV and update users if the exist in CVS file                      
+  foreach ($user in $users) {            
+  #Search in specified OU and Update existing attributes            
+    Set-ADUser -Identity $user.SamAccountName -Department "Selfpay"
+  }
+}
