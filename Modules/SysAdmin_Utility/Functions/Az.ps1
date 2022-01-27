@@ -1,7 +1,8 @@
 <#
 Scripts around AzureMFA(MultiFactor Authentication)
-#Enable-AzureMFA - Force MFA on all HRG users
-#Get-AzureMFAcsv - Check to see who has MFA 'forced' and 'waiting'
+Enable-AzureMFA - Force MFA on all HRG users
+Get-AzureMFAcsv - Check to see who has MFA 'forced' and 'waiting'
+
 #>
 
 #51 Connect to Az Module

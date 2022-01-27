@@ -5,6 +5,8 @@ Start-SysAdminUtility
 Get-AllMods
 Set-ConsoleColor
 Set-LoginCreds
+Set-CloudCreds
+Get-WorkFiles
 
 #>
 
