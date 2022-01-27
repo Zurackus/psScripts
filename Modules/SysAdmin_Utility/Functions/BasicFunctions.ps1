@@ -21,6 +21,7 @@ function Get-ADenabled {
     $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\ADenabled.csv'
     get-aduser -filter "(enabled -eq 'true')" -properties title, company, department, officephone, canonicalname, whencreated, officephone, office, mail, lastlogontimestamp, employeeID | export-csv -path $workOutput
 }
+#get-aduser -filter "(enabled -eq 'true') -AND (company -eq 'Healthcare Resource Group')" -properties title, mail, department | ? {$_.DistinguishedName -notlike "*,OU=Non_Employee,*"} | select Department, Mail, Name, SamAccountName, Title | export-csv "\\vhrgihpe\DATA\DataControl\Clients\Test Client\TCNScoreCard\AD_Request.csv"
 
 #2 Pull all users who are currently disabled
 function Get-ADdisabled {
@@ -33,6 +34,13 @@ function Get-PasswordNeverExpires {
     $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\PassNeverExpiresAccounts.csv'
     get-aduser -Filter { (Enabled -eq $TRUE) -and (PasswordNeverExpires -eq $TRUE) } -ResultPageSize 2000 -Properties Name, SamAccountName, LastLogonDate, passwordlastset, distinguishedname | where-object { $_.distinguishedname -notlike "*disabled*" -and $_.distinguishedname -notlike "*roleaccounts*" } | export-csv -path $workOutput
 }
+<# ---csv---
+#SamAccountName
+#user1
+#user2
+#user3
+import-csv "C:\Users\tkonsonlas\OneDrive - Healthcare Resource Group, Inc\Documents\AD.csv" | ForEach-Object {Set-ADUser -Identity $_.SamAccountName -PasswordNeverExpires:$FALSE}
+#>
 
 #4 Pull all users who have not logged in for the last 60 days
 function Get-NoLogIn60Days {

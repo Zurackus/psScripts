@@ -1,1 +1,0 @@
-﻿.\Get-FolderACL.ps1 -Path \\vhrgihpe\Data | export-csv -Path C:\Users\tkonsonlas\Documents\Data.csv -NoTypeInformation

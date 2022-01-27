@@ -1,1 +1,0 @@
-get-aduser -filter "(enabled -eq 'true')" -properties memberof | select name, @{ l="GroupMembership"; e={$_.memberof  -join ";"  } } | export-csv "C:\Users\tkonsonlas\OneDrive - Healthcare Resource Group, Inc-\AD3.csv"

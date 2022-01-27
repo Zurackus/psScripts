@@ -1,1 +1,0 @@
-get-aduser -filter "(enabled -eq 'true') -AND (company -eq 'Healthcare Resource Group')" -properties title, mail, department | ? {$_.DistinguishedName -notlike "*,OU=Non_Employee,*"} | select Department, Mail, Name, SamAccountName, Title | export-csv "\\vhrgihpe\DATA\DataControl\Clients\Test Client\TCNScoreCard\AD_Request.csv"
