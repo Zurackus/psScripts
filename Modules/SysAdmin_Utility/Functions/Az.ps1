@@ -8,7 +8,7 @@ Get-AzureMFAcsv - Check to see who has MFA 'forced' and 'waiting'
 #51 Connect to Az Module
 function Connect-AzureModule {
     Import-Module -Name Az
-    Connect-AzAccount -Tenant 6cb1f02e-ded5-4987-a92a-420f11a0debb
+    Connect-AzAccount -Tenant ""
 }
 
 #52 Force MFA on all HRG users
@@ -37,7 +37,7 @@ Connect-MsolService
 #Below is a simple output to make sure the right users are being updated
 #Write-Output $users
 
-#Code provided by Microsoft to enable MFA
+    #Code provided by Microsoft to enable MFA
     foreach ($user in $users)
     {
         $st = New-Object -TypeName Microsoft.Online.Administration.StrongAuthenticationRequirement
@@ -172,8 +172,7 @@ Write-Host -ForegroundColor Red "The VM name entered doesn't exist in your conne
 
 function FunctionName {
 #This command uses MSOL to remove the licenses
-Connect-MsolService   
-#
+Connect-MsolService
 $users = Import-Csv -Path "C:\Users\tkonsonlas\Documents\users2.csv"       
             
 foreach ($user in $users) {            

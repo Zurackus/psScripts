@@ -1,5 +1,6 @@
 #To require a module for a script to run you can add the below line
 #'Requires -Modules AzureAD'
+
 <# Modules
 Az
 AzureAD
@@ -7,6 +8,7 @@ ExchangeOnlineManagement
 MSOnline
 ADFSToolbox
 #>
+
 #PS-Repository, accept current settings
 #Remove-Module <module-name>
 #$env:PSModulePath
@@ -32,7 +34,7 @@ Write-Output "12.Enviroment Variable, AppData\Local\Temp :[$env:TEMP]"
 
 #$pshome -force
 
-<#
+<# Basic Networking
 Powershell Equivalent***
 Cmd -> Powershell
 Ipconfig -> get-netipconfiguration
@@ -40,3 +42,9 @@ Ipconfig /all -> get-netipaddress
 Ping -> test-netconnection
 Nslookup - resolve-dnsname
 #>
+
+#Remote Terminal
+enter-pssession -computername Server64
+
+#Run a script remotely
+invoke-command -filepath c:\scripts\test.ps1 -computerName Server64
