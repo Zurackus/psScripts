@@ -1,4 +1,6 @@
 <#
+
+Connect-AzDefault - Connect to Azure TestAccount
 Scripts around AzureMFA(MultiFactor Authentication)
 Enable-AzureMFA - Force MFA on all HRG users
 Get-AzureMFAcsv - Check to see who has MFA 'forced' and 'waiting'
@@ -6,9 +8,13 @@ Get-AzureMFAcsv - Check to see who has MFA 'forced' and 'waiting'
 #>
 
 #51 Connect to Az Module
-function Connect-AzureModule {
+function Connect-AzDefault {
+    param (
+        [string]$AzTenant = "a680b8ba-a944-4780-ae83-5a30d7bb3769", #default TestTenant
+        [string]$Sub = "442df644-9ebd-405e-be0b-4d5b0175f399" #default TestSub
+    )
     Import-Module -Name Az
-    Connect-AzAccount -Tenant "a680b8ba-a944-4780-ae83-5a30d7bb3769" -Subscription '442df644-9ebd-405e-be0b-4d5b0175f399'
+    Connect-AzAccount -Tenant $AzTenant -Subscription $Sub
 }
 
 #52 Force MFA on all HRG users

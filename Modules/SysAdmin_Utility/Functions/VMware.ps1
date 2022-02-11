@@ -1,5 +1,5 @@
 #Restart VM's that have been on for over X days
-#Requires -Modules VMware.PowerCLI
+#'Requires -Modules VMware.PowerCLI'
 <#
 $stat = 'sys.osuptime.latest'
 $now = Get-Date

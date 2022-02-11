@@ -24,20 +24,14 @@
     .EXAMPLE
         Export-AzSentinelAnalyticsRuleTemplates -WorkspaceName "workspacename" -ResourceGroupName "rgname" -fileName "test"
         In this example you will get the file named "test.csv" generated containing all the rule templates
-   
 #>
 
-[CmdletBinding()]
-param (
-    [Parameter(Mandatory = $true)]
-    [string]$WorkSpaceName,
-
-    [Parameter(Mandatory = $true)]
-    [string]$ResourceGroupName,
-
-    [string]$FileName = "rulestemplate.csv"
-)
-Function Export-AzSentinelAnalyticsRuleTemplates ($workspaceName, $resourceGroupName, $filename) {
+Function Export-AzSentinelAnalyticsRuleTemplates {
+    param (
+        [Parameter(Mandatory = $true)]  [string]$WorkSpaceName,
+        [Parameter(Mandatory = $true)]  [string]$ResourceGroupName,
+        [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_RuleTemplates.csv" #default
+    )
 
     #Setup the header for the file
     #$output = "Selected,Severity,DisplayName,Kind,Name,Description,Tactics,RequiredDataConnectors,RuleFrequency,RulePeriod,RuleThreshold,Status"
@@ -57,7 +51,6 @@ Function Export-AzSentinelAnalyticsRuleTemplates ($workspaceName, $resourceGroup
 
     #Load the templates so that we can copy the information as needed
     #tk - URL from https://docs.microsoft.com/en-us/rest/api/securityinsights/preview/alert-rule-templates/get
-    #$url = "https://management.azure.com/subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$($workspaceName)/providers/Microsoft.SecurityInsights/alertruletemplates?api-version=2020-05-01"
     $url = "https://management.azure.com/subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$($workspaceName)/providers/Microsoft.SecurityInsights/alertruletemplates?api-version=2019-01-01-preview"
     #tk - Calling a JSON file with the 'Invoke-RestMethod' so that Powershell can work with the data
     $results = (Invoke-RestMethod -Method "Get" -Uri $url -Headers $authHeader ).value
@@ -97,7 +90,7 @@ Function Export-AzSentinelAnalyticsRuleTemplates ($workspaceName, $resourceGroup
         $ruleThresholdText = RuleThresholdText -triggerOperator $result.properties.triggerOperator -triggerThreshold $result.properties.triggerThreshold
 
         #Create and output the line of information.
-		$tactics = $result.properties.tactics
+		$tactics = $result.properties.tactics #TK
         $severity = $result.properties.severity
 		$displayName = $result.properties.displayName
 		$kind = $result.kind
@@ -177,5 +170,4 @@ Function RuleThresholdText($triggerOperator, $triggerThreshold) {
 if (! $Filename.EndsWith(".csv")) {
     $FileName += ".csv"
 }
-Export-AzSentinelAnalyticsRuleTemplates $WorkSpaceName $ResourceGroupName $FileName
 #>

@@ -4,8 +4,6 @@ This is the where the SysAdmin Utility is first started and contains the followi
 Start-SysAdminUtility
 Get-AllMods
 Set-ConsoleColor
-Set-LoginCreds
-Set-CloudCreds
 Get-WorkFiles
 
 #>
@@ -24,15 +22,15 @@ function Get-AllMods {
         "MicrosoftTeams"
     )
 
-    # Rather than looking through both arrays, just loop through the ones we care about
+    #Rather than looking through both arrays, just loop through the ones we care about
     foreach($mod in $modulesArray) {
         if(Get-Module -ListAvailable $mod) {
             # Module exists
-            # Write-Host "Module '$mod' is already installed"
+            Write-Host "Module '$mod' is already installed"
         } else {
-            # Module does not exist, install it
+            #Module does not exist, install it
             Write-Host "Open an Admin window and install:'$mod'"
-            Install-Module $mod
+            Install-Module -Name $mod
         }
     }
 }
@@ -40,40 +38,6 @@ function Get-AllMods {
 function Set-ConsoleColor ($bc, $fc) {
     $Host.UI.RawUI.BackgroundColor = $bc
     $Host.UI.RawUI.ForegroundColor = $fc
-}
-
-function Set-LoginCreds {
-    $count = 0
-    do {
-        write-host "`n"
-        $global:UN = Read-Host "Username"
-        $global:PW = Read-Host "Password" -AsSecureString
-        Write-Host "$Path"
-        #    $global:UN = $UN
-        #    $global:PW = $PW
-        try {
-            connect-hvserver vhrgcb-03.corp.hrg -user $global:UN -password $global:PW -domain 'hrg' 
-            $success = $true
-            write-host "`n"
-            Write-Host "Login successful"
-        }
-        catch {
-            write-host "Login failure, please try again."
-        }
-        $count++
-    } until ($count -eq 2 -or $success)
-    if (-not($success)) {
-        Read-Host "Exit"
-    }
-}
-
-function Set-CloudCreds {
-    if ($null -eq $global:Credential) {
-        write-host "Cloud Credentials are needed"
-        $global:Credential = Get-Credential
-    }else {
-        write-host "Cloud Credentials set"
-    }
 }
 
 function Get-WorkFiles {

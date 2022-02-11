@@ -1,0 +1,10 @@
+
+Import-Module -Name C:\Users\Tyler\psScripts\Modules\SysAdmin_Utility
+function Connect-AzDefault
+cd C:\Users\Tyler\AppData\Local\WorkFiles
+
+***VSCode Notes***
+ctrl+[ (Unindent all of selected code:multi-line)
+ctrl+] (Indent all of selected code:multi-line)
+
+Ctrl+Shift+P - Open Command Search

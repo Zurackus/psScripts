@@ -30,10 +30,10 @@
 
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)]
+    #[Parameter(Mandatory = $true)]
     [string]$WorkSpaceName,
 
-    [Parameter(Mandatory = $true)]
+    #[Parameter(Mandatory = $true)]
     [string]$ResourceGroupName,
 
     [string]$FileName = "rulestemplate.csv"
