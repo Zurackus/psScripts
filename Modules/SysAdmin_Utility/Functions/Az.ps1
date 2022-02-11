@@ -8,7 +8,7 @@ Get-AzureMFAcsv - Check to see who has MFA 'forced' and 'waiting'
 #51 Connect to Az Module
 function Connect-AzureModule {
     Import-Module -Name Az
-    Connect-AzAccount -Tenant ""
+    Connect-AzAccount -Tenant "a680b8ba-a944-4780-ae83-5a30d7bb3769" -Subscription '442df644-9ebd-405e-be0b-4d5b0175f399'
 }
 
 #52 Force MFA on all HRG users
@@ -64,7 +64,6 @@ Connect-MsolService
         $workOutput = Join-Path -Path $env:LOCALAPPDATA -ChildPath '\WorkFiles\AzureMFA.csv'
         Write-Output $AllUsers | Sort-Object MFAForced, MFAWaiting, isAdmin | export-csv -Path $workOutput
 }
-
 
 function Get-AzureInventoryReport {
 #Provide the subscription Id where the VMs reside
@@ -168,7 +167,6 @@ else{
 Write-Host -ForegroundColor Red "The VM name entered doesn't exist in your connected Azure Tenant! Kindly check the name entered and restart the script with correct VM name..."
 }
 }
-
 
 function FunctionName {
 #This command uses MSOL to remove the licenses

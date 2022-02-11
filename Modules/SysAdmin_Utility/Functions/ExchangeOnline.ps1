@@ -4,6 +4,8 @@ function Connect-ExchangeModule {
     Connect-ExchangeOnline
 }
 
+<#
+
 #https://www.codetwo.com/admins-blog/prevent-users-from-changing-profile-photos-microsoft-365/
 #Get the existing value of the photo setting
 Get-OwaMailboxPolicy | FL name,SetPhotoEnabled
@@ -25,3 +27,5 @@ Add-RoleGroupMember "Organization Management" -Member drobertson@hrgpros.com
 
 #email being blocked by odd rule
 Get-TransportRule 7B066AB9-54FE-4699-B3A3-43E0C25259FA
+
+#>

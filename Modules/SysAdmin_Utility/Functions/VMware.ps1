@@ -1,5 +1,6 @@
 #Restart VM's that have been on for over X days
 #Requires -Modules VMware.PowerCLI
+<#
 $stat = 'sys.osuptime.latest'
 $now = Get-Date
 
@@ -16,7 +17,8 @@ Select @{N='VM';E={$_.Entity.Name}},
 
 #Filter the previous array down to just the VM's greater than X days
 $VMupXdays = $AllVMuptime |
-    Where {$_.UptimeDays -gt 1<#Number of days since last reboot#>} |
+    #Number of days since last reboot
+    Where {$_.UptimeDays -gt 1} |
     Export-Csv -Path "\\hrgatad\I\Helpdesk\VMRestartList.csv"
 
 #Restart each VM in the Xdays array
@@ -39,3 +41,4 @@ ForEach ($VM in $VMupXdays)
         Start-Sleep -Seconds 60
     }
 }
+#>
