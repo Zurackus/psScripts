@@ -1,5 +1,5 @@
 
-Import-Module -Name C:\Users\Tyler\psScripts\Modules\SysAdmin_Utility
+Import-Module -Name C:\Users\Tyler\psScripts\Modules\Az_Utility
 function Connect-AzDefault
 cd C:\Users\Tyler\AppData\Local\WorkFiles
 

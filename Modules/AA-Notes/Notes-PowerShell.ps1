@@ -27,7 +27,7 @@
             Invoke-Command -filepath c:\scripts\test.ps1 -computerName Server64
 
     #--PSScriptroots--#
-        $exportsPath = Join-Path $PSScriptRoot 'Functions.csv'
+        $exportsPath = Join-Path $PSScriptRoot 'Notes.txt'
         $moduleRoot = Split-Path -Parent $PSScriptRoot
         $workFolder = Join-Path -Path (Split-Path -Parent $PSScriptRoot) -ChildPath '\old'
         $workOutput = Join-Path -Path (Split-Path -Parent $PSScriptRoot) -ChildPath '\WorkFiles\Import.csv'
