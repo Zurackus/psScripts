@@ -1,3 +1,6 @@
+#Run this and then you will log in with the browser to the desired account
+az login
+#Set the service Principal(MFA)
 
 Import-Module -Name C:\Users\Tyler\psScripts\Modules\Az_Utility
 function Connect-AzDefault
@@ -8,3 +11,9 @@ ctrl+[ (Unindent all of selected code:multi-line)
 ctrl+] (Indent all of selected code:multi-line)
 
 Ctrl+Shift+P - Open Command Search
+
+
+set AZURE_SUBSCRIPTION_ID="9858880b-151a-47a3-b853-fb05d41adb06"
+set AZURE_TENANT_ID=2d251949-6ece-4dd5-8833-5e65ba0a1e4b
+set AZURE_CLIENT_ID=
+set AZURE_CLIENT_SECRET=
