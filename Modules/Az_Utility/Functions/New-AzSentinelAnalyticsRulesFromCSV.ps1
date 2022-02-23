@@ -28,22 +28,19 @@
    
 #>
 
-[CmdletBinding()]
-param (
-    #[Parameter(Mandatory = $true)]
-    [string]$WorkSpaceName,
+Function New-AzSentinelAnalyticsRulesFromCSV {
+    param (
+        [Parameter(Mandatory = $true)]  [string]$WorkSpaceName,
+        [Parameter(Mandatory = $true)]  [string]$ResourceGroupName,
+        [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_RuleTemplates.csv" #default
+    )
 
-    #[Parameter(Mandatory = $true)]
-    [string]$ResourceGroupName,
+    if (! $Filename.EndsWith(".csv")) { $FileName += ".csv"}
 
-    [string]$FileName = "rulestemplate.csv"
-)
-
-Function New-AzSentinelAnalyticsRulesFromCSV ($workspaceName, $resourceGroupName, $filename) {
     #Set up the authentication header
     $context = Get-AzContext
-    $profile = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
-    $profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($profile)
+    $profiler = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
+    $profileClient = New-Object -TypeName Microsoft.Azure.Commands.ResourceManager.Common.RMProfileClient -ArgumentList ($profiler)
     $token = $profileClient.AcquireAccessToken($context.Subscription.TenantId)
     $authHeader = @{
         'Content-Type'  = 'application/json' 
@@ -59,14 +56,12 @@ Function New-AzSentinelAnalyticsRulesFromCSV ($workspaceName, $resourceGroupName
     $results = (Invoke-RestMethod -Method "Get" -Uri $url -Headers $authHeader ).value
 
     #Load the file information
-
     $fileContents = Import-csv  $FileName
 
     #Iterate through all the lines in the file
     $fileContents | ForEach-object {
         #Read the selected column (the first column in the file)
         $selected = $_.Selected
-
         #If this entry has been marked to be used...
         if ($selected.ToUpper() -eq "X") {
             $name = $_.Name
@@ -159,11 +154,3 @@ Function New-AzSentinelAnalyticsRulesFromCSV ($workspaceName, $resourceGroupName
         }
     }
 }
-
-<#Execute the code
-if (! $Filename.EndsWith(".csv")) {
-    $FileName += ".csv"
-}
-
-New-AzSentinelAnalyticsRulesFromCSV $WorkSpaceName $ResourceGroupName $FileName
-#>

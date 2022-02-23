@@ -58,6 +58,7 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         $description = $result.properties.Description
         #Replace any double quotes.  Commas are already taken care of
         $description = $description -replace '"', '""'
+        #replace '(Preview) '
 
         #Generate the list of data connectors.  Using the pipe as the 
         #delimiter since it does not appear in any data connector name
@@ -73,7 +74,9 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         #Generate the list of tactics.  Using the pipe as the 
         #delimiter since it does not appear in any data connector name
         $tactics = ""
-        foreach ($tactic in $result.properties.tactics) { $tactics += $tactic + "|" }
+        foreach ($tactic in $result.properties.tactics) { 
+            $tactics += $tactic + "|"
+        }
         #If we have an entry, remove the last pipe character
         if ("" -ne $tactics) {
             $tactics = $tactics.Substring(0, $tactics.length - 1)
@@ -83,18 +86,35 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         #Handles simple translations only.
         $frequencyText = ConvertISO8601ToText -queryFrequency $result.properties.queryFrequency  -type "Frequency"
         $queryText = ConvertISO8601ToText -queryFrequency $result.properties.queryPeriod -type "Query"
+        $frequencyText2 = ConvertISO8601ToText -queryFrequency $result.properties.frequency -type "Frequency2"
 
         #Translate the threshold values into some more readable.
         $ruleThresholdText = RuleThresholdText -triggerOperator $result.properties.triggerOperator -triggerThreshold $result.properties.triggerThreshold
 
         #Create and output the line of information.
-		$tactics = $result.properties.tactics #TK
         $severity = $result.properties.severity
 		$displayName = $result.properties.displayName
 		$kind = $result.kind
 		$name = $result.Name
-		
-		[pscustomobject]@{ Selected =" ";Severity=$severity;DisplayName=$displayName;Kind=$kind;Name=$name;Description=$description;Tactics=$tactics;RequiredDataConnectors=$requiredDataConnectors;RuleFrequency=$frequencyText;RulePeriod=$queryText;RuleThreshold=$ruleThresholdText;Status=$result.properties.status }  | Export-Csv $filename -Append -NoTypeInformation
+        $version = $result.properties.anomalyDefinitionVersion
+        $status = $result.properties.status
+
+		[pscustomobject]@{ 
+            'Selected' = " ";
+            'Severity' = $severity;
+            'DisplayName' = $displayName;
+            'Kind' = $kind;
+            'Name' = $name;
+            'Description' = $description;
+            'Tactics' = $tactics;
+            'RequiredDataConnectors' = $requiredDataConnectors;
+            'RuleFrequency' = $frequencyText;
+            'RulePeriod' = $queryText;
+            'RuleFrequency2' = $frequencyText2;
+            'RuleThreshold' = $ruleThresholdText;
+            'Version' = $version;
+            'Status' = $status #Easy way to see which templates are already installed
+        } | Export-Csv $filename -Append -NoTypeInformation
     }
 }
 

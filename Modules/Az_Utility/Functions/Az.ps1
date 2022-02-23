@@ -192,3 +192,12 @@ hrgpros:SPE_E3                  280         0            134
 hrgpros:PROJECTPROFESSIONAL     5           0            3  
 #>
 }
+
+#Create a Service Principal
+az ad sp create-for-rbac --name localtest-sp-rbac
+
+#Find the Subscription(id)
+az account show
+
+#Login to the desired account
+az login
