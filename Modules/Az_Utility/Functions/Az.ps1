@@ -194,10 +194,10 @@ hrgpros:PROJECTPROFESSIONAL     5           0            3
 }
 
 #Create a Service Principal
-az ad sp create-for-rbac --name localtest-sp-rbac
+#az ad sp create-for-rbac --name tkSentinel
 
 #Find the Subscription(id)
-az account show
+#az account show
 
 #Login to the desired account
-az login
+#az login
