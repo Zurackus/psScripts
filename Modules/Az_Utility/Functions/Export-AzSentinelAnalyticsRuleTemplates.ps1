@@ -1,4 +1,8 @@
 <#
+    .NOTES
+        Use the Az module connect to the client/subscription the Sentinel resource is located to run this script
+        Import-Module -Name Az
+        Connect-AzAccount -Tenant '00000aaa-00aa-0000-aa00-aaa00000aaaa' -Subscription '0000aaa0-aa00-00aa-aaaa-000aaa000aa0'
     .SYNOPSIS
         This command will generate a CSV file containing the information about all the Azure Sentinel
         Analytic rules templates.  Place an X in the first column of the CSV file for any template
@@ -12,18 +16,20 @@
     .PARAMETER WorkSpaceName
         Enter the Log Analytics workspace name, this is a required parameter
     .PARAMETER ResourceGroupName
-        Enter the Log Analytics workspace name, this is a required parameter
+        Enter the Resource Group name, this is a required parameter
     .PARAMETER FileName
         Enter the file name to use.  Defaults to "ruletemplates"  ".csv" will be appended to all filenames
     .NOTES
         AUTHOR: Gary Bushey
         LASTEDIT: 16 Jan 2020
+        EDITOR: Tyler Konsonlas
+        LASTEDIT: 2022 Feb 22
     .EXAMPLE
         Export-AzSentinelAnalyticsRuleTemplates -WorkspaceName "workspacename" -ResourceGroupName "rgname"
-        In this example you will get the file named "ruletemplates.csv" generated containing all the rule templates
+        In this example you will get the file named "Sentinel_RuleTemplates.csv" generated containing all the rule templates
     .EXAMPLE
-        Export-AzSentinelAnalyticsRuleTemplates -WorkspaceName "workspacename" -ResourceGroupName "rgname" -fileName "test"
-        In this example you will get the file named "test.csv" generated containing all the rule templates
+        Export-AzSentinelAnalyticsRuleTemplates -WorkspaceName "workspacename" -ResourceGroupName "rgname" -fileName "Sentinel_RuleTemplates"
+        In this example you will get the file named "Sentinel_RuleTemplates.csv" generated containing all the rule templates
 #>
 
 Function Export-AzSentinelAnalyticsRuleTemplates {
@@ -58,6 +64,7 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         $description = $result.properties.Description
         #Replace any double quotes.  Commas are already taken care of
         $description = $description -replace '"', '""'
+        #TODO-tk replace '(Preview) '
 
         #Generate the list of data connectors.  Using the pipe as the 
         #delimiter since it does not appear in any data connector name
@@ -73,7 +80,9 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         #Generate the list of tactics.  Using the pipe as the 
         #delimiter since it does not appear in any data connector name
         $tactics = ""
-        foreach ($tactic in $result.properties.tactics) { $tactics += $tactic + "|" }
+        foreach ($tactic in $result.properties.tactics) { 
+            $tactics += $tactic + "|"
+        }
         #If we have an entry, remove the last pipe character
         if ("" -ne $tactics) {
             $tactics = $tactics.Substring(0, $tactics.length - 1)
@@ -83,18 +92,36 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         #Handles simple translations only.
         $frequencyText = ConvertISO8601ToText -queryFrequency $result.properties.queryFrequency  -type "Frequency"
         $queryText = ConvertISO8601ToText -queryFrequency $result.properties.queryPeriod -type "Query"
+        #tk - found that some of the Alerts had the label 'frequency' rather than the two above options
+        $frequencyText2 = ConvertISO8601ToText -queryFrequency $result.properties.frequency -type "Frequency2"
 
         #Translate the threshold values into some more readable.
         $ruleThresholdText = RuleThresholdText -triggerOperator $result.properties.triggerOperator -triggerThreshold $result.properties.triggerThreshold
 
         #Create and output the line of information.
-		$tactics = $result.properties.tactics #TK
         $severity = $result.properties.severity
 		$displayName = $result.properties.displayName
 		$kind = $result.kind
 		$name = $result.Name
-		
-		[pscustomobject]@{ Selected =" ";Severity=$severity;DisplayName=$displayName;Kind=$kind;Name=$name;Description=$description;Tactics=$tactics;RequiredDataConnectors=$requiredDataConnectors;RuleFrequency=$frequencyText;RulePeriod=$queryText;RuleThreshold=$ruleThresholdText;Status=$result.properties.status }  | Export-Csv $filename -Append -NoTypeInformation
+        $version = $result.properties.anomalyDefinitionVersion
+        $status = $result.properties.status
+
+		[pscustomobject]@{ 
+            'Selected' = " ";
+            'Severity' = $severity;
+            'DisplayName' = $displayName;
+            'Kind' = $kind;
+            'Name' = $name;
+            'Description' = $description;
+            'Tactics' = $tactics;
+            'RequiredDataConnectors' = $requiredDataConnectors;
+            'RuleFrequency' = $frequencyText;
+            'RulePeriod' = $queryText;
+            'RuleFrequency2' = $frequencyText2;
+            'RuleThreshold' = $ruleThresholdText;
+            'Version' = $version; #Fixed to reflect version if available
+            'Status' = $status #Easy way to see which templates are already installed
+        } | Export-Csv $filename -Append -NoTypeInformation
     }
 }
 

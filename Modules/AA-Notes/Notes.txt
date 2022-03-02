@@ -1,3 +1,6 @@
+#Run this and then you will log in with the browser to the desired account
+az login
+#Set the service Principal(MFA)
 
 Import-Module -Name C:\Users\Tyler\psScripts\Modules\Az_Utility
 function Connect-AzDefault
