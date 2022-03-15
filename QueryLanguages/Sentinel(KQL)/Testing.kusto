@@ -57,4 +57,4 @@ WindowsFirewall
  | where count_ > 10
  | sort by count_ //Sort by a specific column
 
-Windows
+
