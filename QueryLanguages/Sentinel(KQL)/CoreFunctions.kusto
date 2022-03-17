@@ -1,5 +1,8 @@
 //Core Functions
 where //Filters on a specific predicate
+    where TimeGenerated > ago(7d)
+    where FirewallAction == "DROP" and CommunicationDirection == "RECEIVE"
+    where count_ > 10
 extend //Creates a calculated column and adds it to the result set
 summarize //Groups the rows according to the by group columns, and calculates aggregations over each group
 render //Renders results as a graphical output
@@ -14,6 +17,25 @@ limit //Return up to the specified number of rows
 Make_list()//returns a dynamic JSON array of all the values of expression in the group
 Make_set()//returns a dynamic JSON array containing distinct values that the expression in the group
 join //Merge the rows of two tables to form a new table by matching values of the specified columns from each table.
+    SecurityAlert
+    | mv-expand entity=todynamic(Entities)
+    | where entity.Type == "account"
+    | extend Account = strcat(entity.NTDomain, "\\",entity.Name)
+    | summarize dcount(SystemAlertId) by Account
+    | join kind=leftouter (//Join used here
+        SecurityEvent
+        | summarize make_set(EventID) by Account) on Account
+    | project-away Account1
+
+    let Events = MyLogTable | where type=="Event" ;//creating a variable to call with the 'join'
+    Events
+    | where Name == "Start"
+    | project Name, City, ActivityId, StartTime=timestamp
+    | join (Events//Join used here
+        | where Name == "Stop"
+            | project StopTime=timestamp, ActivityId)
+        on ActivityId
+    | project City, ActivityId, StartTime, StopTime, Duration = StopTime - StartTime
 
 //Core Operators
 strcat //Convert to string and concatenate
@@ -54,24 +76,4 @@ let //Binds a name to expressions that can refer to its bound value.
         //Values can be lambda expressions to create ad-hoc functions as part of the query.
         //Use let to create expressions over tables whose results look like a new table.
 let timeOffset = 7d;
-let discardEventId = 4688;
-
-SecurityAlert
-| mv-expand entity=todynamic(Entities)//mv-expand turns dynamic arrays into rows that can be called if they are available
-| where entity.Type == "account"
-| extend Account = strcat(entity.NTDomain, "\\",entity.Name)
-| summarize dcount(SystemAlertId) by Account
-| join kind=leftouter (
-    SecurityEvent
-    | summarize make_set(EventID) by Account) on Account
-| project-away Account1
-
-let Events = MyLogTable | where type=="Event" ;
-Events
-| where Name == "Start"
-| project Name, City, ActivityId, StartTime=timestamp
-| join (Events
-    | where Name == "Stop"
-        | project StopTime=timestamp, ActivityId)
-    on ActivityId
-| project City, ActivityId, StartTime, StopTime, Duration = StopTime - StartTime                         
+let discardEventId = 4688;                         
