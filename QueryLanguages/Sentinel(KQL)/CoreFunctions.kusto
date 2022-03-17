@@ -9,24 +9,52 @@ project //Selects the columns to include in the order specified
     project-rename //Renames columns in the result output
     project-reorder //Reorders columns in the result output
 mv-expand //Turns dynamic arrays into rows (multi-value expansion)
-
+union //Takes two or more tables and returns the rows of all of them
+limit //Return up to the specified number of rows
+Make_list()//returns a dynamic JSON array of all the values of expression in the group
+Make_set()//returns a dynamic JSON array containing distinct values that the expression in the group
+join //Merge the rows of two tables to form a new table by matching values of the specified columns from each table.
 
 //Core Operators
 strcat //Convert to string and concatenate
-extend Account = strcat(entity.NTDomain, "\\",entity.Name)
+    extend Account = strcat(entity.NTDomain, "\\",entity.Name)
 strlen //Returns the length, in characters, of the input string
-summarize countif(strlen(name) > 4)
-count //Counts records in the input table (for example, T)
-summarize count() by process, Process, Computer
-    countif //Counts records in the input table meets predicate
     summarize countif(strlen(name) > 4)
+count //Counts records in the input table (for example, T)
+    summarize count() by process, Process, Computer
+    countif //Counts records in the input table meets predicate
+        summarize countif(strlen(name) > 4)
     dcount //Returns an estimate for the number of distinct values that are taken by a scalar expression in the summary group
-    summarize countries=dcount(country) by continent
+        summarize countries=dcount(country) by continent
 startswith //RHS is an initial subsequence of LHS
-"Fabrikam" startswith "fab"
+    "Fabrikam" startswith "fab"
 !startswith //RHS isn't an initial subsequence of LHS
-"Fabrikam" !startswith "kam"
-
+    "Fabrikam" !startswith "kam"
+and, or //
+    where FirewallAction == "DROP" and CommunicationDirection == "RECEIVE"
+now() //Current time of day
+    Age = now() -startTime_t
+contains //Filters a record set for data containing a case-insensitive string
+    where ProcessName contains "squid"
+extract //Get a match for a regular expression from a source string
+    HTTP_Status_Code = extract("(TCP_(([A-Z]+)…-9]{3}))",8,SyslogMessage)
+tostring //Converts input to a string representation
+    extend IPAddress =tostring(AlertEntities.Address)
+isnotempty //Returns true if the argument isn't an empty string, and it isn't null
+    where isnotempty(IPAddress)
+materialize //Allows caching a subquery result during the time of query execution in a way that other subqueries can reference the partial result
+    let _detailed_data = materialize(StormEvents | summarize Events=count() by State, EventType);
+    _detailed_data
+    | summarize TotalStateEvents=sum(Events) by State
+    | join (_detailed_data) on State
+    | extend EventPercentage = Events*100.0 / TotalStateEvents
+    | project State, EventType, EventPercentage, Events
+    | top 10 by EventPercentage
+let //Binds a name to expressions that can refer to its bound value.
+        //Values can be lambda expressions to create ad-hoc functions as part of the query.
+        //Use let to create expressions over tables whose results look like a new table.
+let timeOffset = 7d;
+let discardEventId = 4688;
 
 SecurityAlert
 | mv-expand entity=todynamic(Entities)//mv-expand turns dynamic arrays into rows that can be called if they are available
