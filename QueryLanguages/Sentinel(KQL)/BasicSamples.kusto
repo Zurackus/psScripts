@@ -1,0 +1,278 @@
+SecurityEvent
+| summarize by Activity // Finding events that includes process names
+
+SecurityEvent
+| where EventID == "4688" // '4688' - a new process has been created
+| summarize count() by CommandLine, Computer
+
+SecurityEvent
+| where EventID == "4688" // '4688' - a new process has been created
+| extend process = extract("^(.*?)( |$)",1,CommandLine) //get only the process name
+| summarize count() by process, Process, Computer
+//summarizes with columns 'process'(location),'Processes'(.exe), 'Computer', 'count'
+
+SecurityEvent
+| where TimeGenerated between (ago(14d)..ago(7d))//start with the time filter
+| where EventID == "4624"
+| where Computer startswith "App" //case insensitive
+| summarize count() by Computer //count per computer
+
+SecurityEvent
+| where Computer startswith "DC"
+| where EventID == "4688"
+| summarize count() by Computer, bin(TimeGenerated, 1h)
+| render timechart//Timechart display
+
+SecurityAlert | union SecurityEvent
+| summarize
+    SecurityAlerts = countif(Type == "SecurityAlert"), //custom variable
+    SecurityEvents = countif(Type == "SecurityEvent") //custom variable
+    by bin (TimeGenerated, 1h)
+| extend Ratio = SecurityAlerts * 1.0 / SecurityEvents //Ratio is a custom variable
+| project SecurityEvents, SecurityAlerts, Ratio //Selecting the fields to display
+
+SecurityAlert
+| mv-expand entity=todynamic(Entities)//mv-expand turns dynamic arrays into rows that can be called if they are available
+| where entity.Type == "account"
+| extend Account = strcat(entity.NTDomain, "\\",entity.Name)//Convert to string and concatenate
+| summarize dcount(SystemAlertId) by Account
+| join kind=leftouter (SecurityEvent | summarize make_set(EventID) by Account) on Account | project-away Account1
+
+WindowsFirewall | limit 10 // Identify fields: CommunicationDirection, FirewallAction, SourceIP
+
+WindowsFirewall
+ | summarize by CommunicationDirection, FirewallAction //Checking for possible values
+
+WindowsFirewall
+ | where TimeGenerated > ago(7d)
+ | where FirewallAction == "DROP" and CommunicationDirection == "RECEIVE"
+ | summarize count() by SourceIP
+ | where count_ > 10
+ | sort by count_ //Sort by a specific column
+
+
+
+WindowsFirewall
+| where TimeGenerated > ago(7d)
+| where CommunicationDirection == "RECEIVE"
+| summarize
+    Dropped=countif(FirewallAction == "DROP"),
+    Allowed=countif(FirewallAction == "ALLOW")
+    by bin(TimeGenerated, 1h)
+| render timechart
+
+WindowsFirewall
+| where TimeGenerated > ago(7d)
+| where CommunicationDirection == "RECEIVE"
+| summarize
+    Ratio=countif(FirewallAction == "DROP")/countif(FirewallAction == "ALLOW")
+    by bin(TimeGenerated, 1h)
+| render timechart
+
+AzureActivity
+| where Timegenerated > ago(1d)
+| summarize count() by Level
+
+AzureActivity
+| where Timegenerated > datetime(2020-12-26)
+And Timegenerated > datetime(2020-12-28)
+| summarize count() by Level
+
+AzureDiagnostics
+| extend
+Duration = endTime_t - startTime_t,
+Age = now() -startTime_t
+
+| summarize Total = count() by bin(Maximum, 1)#For rounding off the time
+
+AzureActivity
+| where OperationName == "Create or update virual machine" or OperationName == "Create deployment"
+| where ActivityStatus == "Succeeded"
+| make-series dcount(ResourceID) default=0 1on Event SubmissionTimestamp in range(ago(7d), now(), 1d) by  Caller
+
+let timeOffset = 7d;
+let discardEventId = 4688;
+
+SecurityEvent
+| where TimeGenerated > ago(timeOffset*2) and TimeGenerated < ago(timeOffset)
+| where EventID != discardEventId
+
+let suspiciousAccounts = datatable(account: string) [
+    @"\administrator", 
+    @"NT AUTHORITY\SYSTEM"
+];
+
+SecurityEvent | where Account in (suspiciousAccounts)
+
+let LowActivityAccounts =
+    SecurityEvent 
+    | summarize cnt = count() by Account 
+    | where cnt < 10;
+
+LowActivityAccounts | where Account contains "Mal"
+
+search "err"
+
+search in (SecurityEvent,SecurityAlert,A*) "err"
+
+SecurityEvent
+| where TimeGenerated > ago(1d)
+
+SecurityEvent
+| where TimeGenerated > ago(1h) and EventID == "4624"
+
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID == 4624
+| where AccountType =~ "user"
+
+SecurityEvent | where EventID in (4624, 4625)
+
+SecurityAlert
+| where TimeGenerated > ago(7d)
+| extend severityOrder = case (
+    AlertSeverity == "High", 3,
+    AlertSeverity == "Medium", 2, 
+    AlertSeverity == "Low", 1,
+    AlertSeverity == "Informational", 0,
+    -1)
+//---------------------------------------------------------------------------------------------------------------
+let timeframe = 1d;
+
+let DomainList = dynamic(["tor2web.org", "tor2web.com"]);
+
+Syslog
+| where TimeGenerated >= ago(timeframe)
+| where ProcessName contains "squid"
+| extend 
+  HTTP_Status_Code = extract("(TCP_(([A-Z]+)…-9]{3}))",8,SyslogMessage),    
+  Domain = extract("(([A-Z]+ [a-z]{4…Z]+ )([^ :\\/]*))",3,SyslogMessage)
+| where HTTP_Status_Code == "200"
+| where Domain contains "."
+| where Domain has_any (DomainList)
+//---------------------------------------------------------------------------------------------------------------
+SecurityAlert
+| where TimeGenerated > ago(7d)
+| extend severityOrder = case (
+    AlertSeverity == "High", 3,
+    AlertSeverity == "Medium", 2, 
+    AlertSeverity == "Low", 1,
+    AlertSeverity == "Informational", 0,
+    -1)
+| order by severityOrder desc
+
+let IP_Data = external_data (network:string,geoname_id:long,continent_code:string,continent_name:string ,country_iso_code:string,country_name:string,is_anonymous_proxy:bool,is_satellite_provider:bool)['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']with(ignoreFirstRecord=true,format="csv");
+SecurityAlert
+|where TimeGenerated >ago(12h)
+|extend AlertEntities =parse_json(Entities)
+|mv-expand AlertEntities
+|extend IPAddress =tostring(AlertEntities.Address)
+|summarize ipCount=count()by IPAddress
+|where isnotempty(IPAddress)
+|evaluate ipv4_lookup(IP_Data,IPAddress,network)
+//| where country_name != "United States"
+
+let geoData = materialize
+(externaldata(network:string,geoname_id:string,continent_code:string,continent_name:string, country_iso_code:string,country_name:string,is_anonymous_proxy:string,is_satellite_provider:string)
+['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv'] with
+(ignoreFirstRecord=true, format="csv"));
+let lookup = toscalar( geoData | summarize list_CIDR=make_set(network) );
+fn_AzureDiagnostics
+| where Category contains "ApplicationGateway"
+| where Message contains "Inbound Anomaly Score Exceeded"
+|summarize by clientIp_s
+| mv-apply list_CIDR=lookup to typeof(string) on
+(
+where ipv4_is_match (clientIp_s, list_CIDR) //== false
+)
+| join kind=rightouter (fn_AzureDiagnostics | where TimeGenerated > ago(7d)) on clientIp_s
+| join kind=leftouter
+(
+geoData
+) on $left.list_CIDR == $right.network
+|summarize count() by clientIp_s, country_name, hostname_s
+|where clientIp_s <> ""
+|order by count_ desc
+| where country_name <> "United States"
+| where country_name <> "United Kingdom"
+| where count_ >= 10
+
+	Let timeframe = 1d;
+	Let threshold = 3;
+	
+	SigninLogs
+	| whereTimeGenerated >= ago(timeframe)
+| whereResultType == "50057"| whereResultDescription =~ "User account is disabled. The account has been disabled by an administrator."| summarizeapplicationCount = dcount(AppDisplayName) byUserPrincipalName, IPAddress
+| whereapplicationCount >= threshold
+
+Make_list() - returns a dynamic JSON array of all the values of expression in the group
+Make_set() - returns a dynamic JSON array containing distinct values that the expression in the group
+
+Union - takes two or more tables and returns the rows of all of them
+
+CommonSecurityLog
+| extend Country=MaliciousIPCountry,//Can use extend to duplicate columns with a different name
+    Latitude=MaliciousIPLatitude,
+    Confidence=ThreatDescription,
+    Description=ThreatDescription
+| where isnotempty(Country)
+| project Country,DeviceVendor,DeviceProduct,SimplifiedDeviceAction,SourceIP, DestinationIP, DestinationPort
+| summarize count() by Country, SourceIP, DestinationIP, DestinationPort,SimplifiedDeviceAction
+| where Country == "Russia"
+
+// Query 1 - will return all rows of SecurityEvent and all rows of SecurityAlert
+SecurityEvent 
+| unionSecurityAlert  
+// Query 2 - will return one row and column, which is the count of all rows of SecurityEvent and all //rows of SecurityAlert
+SecurityEvent 
+| unionSecurityAlert  
+| summarizecount() 
+| projectcount_
+// Query 3 - will return all rows of SecurityEvent and one row for SecurityAlert
+SecurityEvent 
+| union(SecurityAlert | summarizecount()| projectcount_)
+
+//Union will also support wild cards for multiple tables
+unionSecurity* 
+| summarizecount() byType
+
+//example of *Join*
+SecurityEvent 
+| where EventID == "4624" 
+| summarize LogOnCount=count() by EventID, Account
+| project LogOnCount, Account 
+| join kind = inner (
+     SecurityEvent 
+     | where EventID == "4634" 
+     | summarize LogOffCount=count() by EventID, Account 
+     | project LogOffCount, Account 
+) on Account
+
+//Reference a search with another search--------------------------------------------------------------------------
+let top5 = SecurityEvent
+| where EventID == 4625 and AccountType == 'User'
+| extend Account_Name = extract(@"^(.*\\)?([^@]*)(@.*)?$", 2, tolower(Account))
+| summarize Attempts = count() by Account_Name
+| where Account_Name != ""
+| top 5 by Attempts 
+| summarize make_list(Account_Name);
+
+SecurityEvent
+| where EventID == 4625 and AccountType == 'User'
+| extend Name = extract(@"^(.*\\)?([^@]*)(@.*)?$", 2, tolower(Account))
+| extend Account_Name = iff(Name in (top5), Name, "Other")
+| where Account_Name != ""
+| summarize Attempts = count() by Account_Name
+//----------------------------------------------------------------------------------------------------------------
+
+Let m = materialize(
+	stormEvents | summarize n=count() by State
+	);
+m
+|  where n > 100;
+m
+|  where n > 2000;
+m
+|  where n between(1500 .. 2000);
+
+Distinct $table
