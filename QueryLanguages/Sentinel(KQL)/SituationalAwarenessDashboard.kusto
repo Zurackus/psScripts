@@ -1,0 +1,279 @@
+//***Alerts***
+//Alerts by IP
+let IP_Data = external_data(
+    network:string,
+    geoname_id:long,
+    continent_code:string,
+    continent_name:string,
+    country_iso_code:string,
+    country_name:string,
+    is_anonymous_proxy:bool,
+    is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+SecurityAlert
+| where TimeGenerated > ago(120h)
+| extend AlertEntities = parse_json(Entities)
+| mv-expand AlertEntities
+| extend IPAddress = tostring(AlertEntities.Address)
+| summarize count() by IPAddress
+| where isnotempty(IPAddress)
+| evaluate ipv4_lookup(IP_Data, IPAddress, network)
+//| where country_name != "United States"
+| where country_name == "Russia"
+|project IPAddress, count_
+|order by count_ desc
+|render columnchart 
+//-----------------------------------------------------------------------------------------
+//EDR Alerts
+let IP_Data =
+    external_data(
+        network:string,
+        geoname_id:long,
+        continent_code:string,
+        continent_name:string,
+        country_iso_code:string,
+        country_name:string,
+        is_anonymous_proxy:bool,
+        is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+SecurityAlert
+| where TimeGenerated > ago(120h)
+| where ProviderName == "MDATP"
+| extend Entities = parse_json(Entities)
+| mv-expand Entities
+| extend BadIPAddress = tostring(Entities.Address)
+| extend HostName = tostring(Entities.CompromisedEntity)
+| summarize count() by BadIPAddress, CompromisedEntity,DisplayName, bin(TimeGenerated, 1h)
+| where isnotempty(BadIPAddress)
+| evaluate ipv4_lookup(IP_Data, BadIPAddress, network)
+| where country_name == "Russia"
+|summarize count() by BadIPAddress, CompromisedEntity, DisplayName
+//-----------------------------------------------------------------------------------------
+//Timeline: Spikes by Alert
+let IP_Data =
+    external_data(
+        network:string,
+        geoname_id:long,
+        continent_code:string,
+        continent_name:string,
+        country_iso_code:string,
+        country_name:string,
+        is_anonymous_proxy:bool,
+        is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+SecurityAlert
+| where TimeGenerated > ago(120h)
+| extend AlertEntities = parse_json(Entities)
+| mv-expand AlertEntities
+| extend IPAddress = tostring(AlertEntities.Address)
+| summarize count() by IPAddress, DisplayName, ProviderName, bin(TimeGenerated, 1h)
+| where isnotempty(IPAddress)
+| evaluate ipv4_lookup(IP_Data, IPAddress, network)
+| where country_name != "United States"
+//|project TimeGenerated, country_name, IPAddress, ProviderName, DisplayName
+| where country_name == "Russia"
+//|project IPAddress, DisplayName,ProviderName, count_
+//|order by count_ desc
+|render timechart 
+//-----------------------------------------------------------------------------------------
+//***Malicious Traffic***
+//Traffic: Destination Domain and Port
+CommonSecurityLog
+| extend  Country=MaliciousIPCountry
+|where TimeGenerated >ago(7d)
+|where Country == "Russia"
+|where DestinationIP == ""
+//|extend HostPort = strcat(DestinationHostName, "-port-", DestinationPort)
+|summarize count() by DestinationHostName, DestinationPort
+|order by count_ desc 
+//-----------------------------------------------------------------------------------------
+//Traffic: Destination IP and Port
+CommonSecurityLog
+//| extend  Country=MaliciousIPCountry
+|where TimeGenerated >ago(7d)
+|where MaliciousIPCountry == "Russia"
+|where DestinationIP <> ""
+|summarize count() by DestinationIP, DestinationPort
+|order by count_ desc
+|limit 10
+//-----------------------------------------------------------------------------------------
+//Traffic: Top 10 Malicious IPs(Sources)
+CommonSecurityLog
+| extend  Country=MaliciousIPCountry
+|where TimeGenerated >ago(7d)
+|where Country == "Russia"
+|where DestinationIP == ""
+|summarize count() by MaliciousIP
+|order by count_ desc
+|limit 10
+//-----------------------------------------------------------------------------------------
+//Timeline: Spikes by events, Includes log sources - cisco, etc
+CommonSecurityLog
+| extend  Country=MaliciousIPCountry
+|where TimeGenerated >ago(7d)
+|where Country == "Russia"
+|summarize count() by bin(TimeGenerated, 1h)
+|render timechart
+|extend Threshold=80
+//-----------------------------------------------------------------------------------------
+//***All Traffic***
+//Traffic: Destination IPs by count
+let IP_Data = 
+    external_data(
+        network:string,
+        geoname_id:long,
+        continent_code:string,
+        continent_name:string,
+        country_iso_code:string,
+        country_name:string,
+        is_anonymous_proxy:bool,
+        is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| where DestinationIP !startswith "192."
+| where DestinationIP !startswith "10."
+| where DestinationIP !startswith "127."
+| where DestinationIP !startswith "171."
+| summarize count() by SourceIP, DestinationIP, DestinationPort, SimplifiedDeviceAction, DeviceVendor, bin(TimeGenerated, 1h)
+| where isnotempty(SourceIP)
+| evaluate ipv4_lookup(IP_Data, SourceIP, network)
+| where country_name != "United States"
+//|project TimeGenerated, country_name, IPAddress, ProviderName, DisplayName
+| where country_name == "Russia"
+|summarize count() by SourceIP
+|render columnchart 
+//-----------------------------------------------------------------------------------------
+//Traffic: Source, Destination and Dest port
+let IP_Data = 
+    external_data(
+        network:string,
+        geoname_id:long,
+        continent_code:string,
+        continent_name:string,
+        country_iso_code:string,
+        country_name:string,
+        is_anonymous_proxy:bool,
+        is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| where not (SourceIP startswith "192." or SourceIP startswith "10." or SourceIP startswith "127." or SourceIP startswith "171.")
+| where DeviceVendor == "Palo Alto Networks"
+| summarize count() by SourceIP, SourcePort, DestinationIP, DestinationPort, ApplicationProtocol, Activity, SimplifiedDeviceAction, DeviceVendor, DeviceCustomString5, Message, RequestURL, DeviceEventClassID,FlexString2,bin(TimeGenerated, 1h)
+| where isnotempty(SourceIP)
+| evaluate ipv4_lookup(IP_Data, SourceIP, network)
+| where country_name != "United States"
+| where country_name == "Russia"
+|summarize count() by SourceIP, DestinationIP, DestinationPort
+|order by count_ desc 
+|render scatterchart 
+//-----------------------------------------------------------------------------------------
+//Traffic: Destination IP, Port and Zone
+let IP_Data = 
+    external_data(
+        network:string,
+        geoname_id:long,
+        continent_code:string,
+        continent_name:string,
+        country_iso_code:string,
+        country_name:string,
+        is_anonymous_proxy:bool,
+        is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| where not (SourceIP startswith "192." or SourceIP startswith "10." or SourceIP startswith "127." or SourceIP startswith "171.")
+| where DeviceVendor == "Palo Alto Networks"
+| summarize count() by SourceIP, DestinationIP, DestinationPort, ApplicationProtocol, Activity, SimplifiedDeviceAction, DeviceVendor, DeviceCustomString5, Message, RequestURL, DeviceEventClassID,FlexString2,bin(TimeGenerated, 1h)
+| where isnotempty(SourceIP)
+| evaluate ipv4_lookup(IP_Data, SourceIP, network)
+| where country_name != "United States"
+| where country_name == "Russia"
+|summarize count() by DestinationIP, DestinationPort, DeviceCustomString5
+|order by count_ desc 
+//-----------------------------------------------------------------------------------------
+//PaloAlto Outbound Web
+let IP_Data = 
+    external_data(
+        network:string,
+        geoname_id:long,
+        continent_code:string,
+        continent_name:string,
+        country_iso_code:string,
+        country_name:string,
+        is_anonymous_proxy:bool,
+        is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+CommonSecurityLog
+| where TimeGenerated > ago(1d)
+| where DeviceVendor == "Palo Alto Networks"
+| where Activity == "THREAT"
+| where SourceIP startswith "192." or SourceIP startswith "10." or SourceIP startswith "127." or SourceIP startswith "171."
+| summarize count() by SourceIP, DestinationIP, DestinationPort, ApplicationProtocol, Activity, SimplifiedDeviceAction, DeviceVendor, Message, RequestURL, DeviceEventClassID,FlexString2
+| where isnotempty(SourceIP)
+| evaluate ipv4_lookup(IP_Data, DestinationIP, network)
+//|project TimeGenerated, country_name, IPAddress, ProviderName, DisplayName
+| where country_name == "Russia"
+|summarize count() by  RequestURL
+|order by count_ desc 
+|render barchart 
+//-----------------------------------------------------------------------------------------
+//All PaloAlto Threat by Country
+let IP_Data = 
+    external_data(
+        network:string,
+        geoname_id:long,
+        continent_code:string,
+        continent_name:string,
+        country_iso_code:string,
+        country_name:string,
+        is_anonymous_proxy:bool,
+        is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+CommonSecurityLog
+| where TimeGenerated > ago(1d)
+| where DestinationIP !startswith "192."
+| where DestinationIP !startswith "10."
+| where DestinationIP !startswith "127."
+| where DestinationIP !startswith "171."
+| where DeviceVendor == "Palo Alto Networks"
+| where Activity == "THREAT"
+//| summarize count() by SourceIP, DestinationIP, DestinationPort, ApplicationProtocol, Activity, SimplifiedDeviceAction, DeviceVendor, Message, RequestURL,FlexString2,bin(TimeGenerated, 1h)
+//| where isnotempty(SourceIP)
+| evaluate ipv4_lookup(IP_Data, DestinationIP, network)
+| where country_name != "United States"
+//|project TimeGenerated, country_name, IPAddress, ProviderName, DisplayName
+|summarize count() by country_name
+|order by count_ desc 
+|render columnchart 
+//-----------------------------------------------------------------------------------------
+//Timeline: spikes by events, include bar for each log source - cisco, etc
+let IP_Data = 
+    external_data(
+        network:string,
+        geoname_id:long,
+        continent_code:string,
+        continent_name:string,
+        country_iso_code:string,
+        country_name:string,
+        is_anonymous_proxy:bool,
+        is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+CommonSecurityLog
+| where TimeGenerated > ago(10d)
+| where not (SourceIP startswith "192." or SourceIP startswith "10." or SourceIP startswith "127." or SourceIP startswith "171.")
+| evaluate ipv4_lookup(IP_Data, SourceIP, network)
+| where country_name == "Russia"
+|summarize count() by bin(TimeGenerated, 1h)
+|render timechart 
+|extend Threshold=2000
