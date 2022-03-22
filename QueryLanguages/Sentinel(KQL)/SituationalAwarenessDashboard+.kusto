@@ -1,0 +1,52 @@
+//All activity not denied - Summarized Dest, Src, Threat
+let bob = _GetWatchlist('MaliciousIPs');
+bob
+| where SimplifiedDeviceAction != "Deny"
+| summarize count() by DestinationIP, SourceIP, IndicatorThreatType
+
+//Malicious Country top 10
+let bob = _GetWatchlist('MaliciousIPs');
+bob
+| summarize count() by Country
+| top 10 by count_ desc
+
+//Timeline of top 10 Country Probes
+let bob = _GetWatchlist('MaliciousIPs');
+bob
+| summarize count() by Country
+| top 10 by count_ desc
+| project-away count_
+| join kind=leftouter (
+    bob
+    | summarize count() by Country, bin(TimeGenerated, 1h))
+    on Country
+| project-away Country1
+| render timechart
+
+//Destination Ips and ports Probed
+let bob = _GetWatchlist('MaliciousIPs');
+bob
+| summarize count() by DestinationIP
+| top 10 by count_ desc
+| join kind = leftouter (
+    bob
+    | summarize AttPorts = make_set(DestinationPort) by DestinationIP)
+    on DestinationIP
+| project-away DestinationIP1
+
+//Source Ips and destination ports Probed
+let bob = _GetWatchlist('MaliciousIPs');
+bob
+| summarize count() by SourceIP
+| top 10 by count_ desc
+| join kind = leftouter (
+    bob
+    | summarize AttPorts = make_set(DestinationPort) by SourceIP)
+    on SourceIP
+| project-away SourceIP1
+
+//Top destination ports Probed
+let bob = _GetWatchlist('MaliciousIPs');
+bob
+| summarize count() by DestinationPort
+| top 25 by count_ desc

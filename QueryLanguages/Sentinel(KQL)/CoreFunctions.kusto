@@ -1,41 +1,46 @@
 //Core Functions
 where //Filters on a specific predicate
+    where AccountType =~ "machine" //Note: '~' will tell KQL to not worry about the case of letters
     where TimeGenerated > ago(7d)
     where FirewallAction == "DROP" and CommunicationDirection == "RECEIVE"
     where count_ > 10
+    where ProcessCommandLine has_any("WebClient", "DownloadFile","DownloadData",)
+    //String predicates: ==, =~, has, contains, startswith, endswith, matches regex, etc
+    //Numeric/Date predicates: ==, !=, <, >, <=, >=
+    //Empty predicates: isempty(), notempty(), isnull(), notnull()
 extend //Creates a calculated column and adds it to the result set
-summarize //Groups the rows according to the by group columns, and calculates aggregations over each group
-render //Renders results as a graphical output
-project //Selects the columns to include in the order specified
+project //Selects the columns to include in the order specified and can do what 'extend' does
     project-away //Selects the columns to exclude from the output
     project-keep //Selects the columns to keep in the output
     project-rename //Renames columns in the result output
     project-reorder //Reorders columns in the result output
+distinct //Similar to project, but produces a table with the distinct combination of the provided columns of the input table
+summarize //Groups the rows according to the by group columns, and calculates aggregations over each group
+    count, countif //Returns a count of the records per summarization group
+    dcount, dcountif //Returns an estimate for the number of distinct values taken by a scalar expression in the summary group
+    avg, avgif //Calculates the average of Expr across the group
+    max, maxif //Returns the maximum value across the group
+    min, minif //Returns the minimum value across the group
+    percentile //Returns an estimate for the specified nearest-rank percentile of the population defined by Expr. The accuracy depends on the density of population in the region of the percentile
+    stdev, stdevif //Calculates the standard deviation of Expr across the group, considering the group as a sample
+    sum, sumif //Calculates the sum of Expr across the group
+    variance, varianceif //Calculates the variance of Expr across the group, considering the group as a sample
+render //Renders results as a graphical output
 mv-expand //Turns dynamic arrays into rows (multi-value expansion)
 union //Takes two or more tables and returns the rows of all of them
-limit //Return up to the specified number of rows
+limit (take)//Return up to the specified number of rows(max is 30,000 rows), don't go beyond about 1,000
+sort //Sort the rows of the input table into order by one or more columns
 Make_list()//returns a dynamic JSON array of all the values of expression in the group
 Make_set()//returns a dynamic JSON array containing distinct values that the expression in the group
 join //Merge the rows of two tables to form a new table by matching values of the specified columns from each table.
-    SecurityAlert
-    | mv-expand entity=todynamic(Entities)
-    | where entity.Type == "account"
-    | extend Account = strcat(entity.NTDomain, "\\",entity.Name)
-    | summarize dcount(SystemAlertId) by Account
-    | join kind=leftouter (//Join used here
-        SecurityEvent
-        | summarize make_set(EventID) by Account) on Account
-    | project-away Account1
-
-    let Events = MyLogTable | where type=="Event" ;//creating a variable to call with the 'join'
-    Events
-    | where Name == "Start"
-    | project Name, City, ActivityId, StartTime=timestamp
-    | join (Events//Join used here
-        | where Name == "Stop"
-            | project StopTime=timestamp, ActivityId)
-        on ActivityId
-    | project City, ActivityId, StartTime, StopTime, Duration = StopTime - StartTime
+    // Simple Join:
+    Table1 | join (Table2) on CommonColumn, $left.Col1 == $right.Col2
+    //Best practice(Use the smaller table on the left ~100,000 results)
+    join kind = inner //returns the 'on' variable seen in both left/right tables(Default 'kind' if none is explicitly given)
+    join kind = innerunique //returns the unique 'on' variable seen in both left/right tables
+    join kind = fullouter //returns everything from both tables
+    join kind = leftouter //returns everything from the left table and only the things from the right table that appeard with the 'on' variable in the left table
+    join kind = rightouter //returns everything from the right table and only the things from the left table that appeard with the 'on' variable in the right table
 
 //Core Operators
 strcat //Convert to string and concatenate
@@ -53,7 +58,8 @@ startswith //RHS is an initial subsequence of LHS
 !startswith //RHS isn't an initial subsequence of LHS
     "Fabrikam" !startswith "kam"
 and, or //
-    where FirewallAction == "DROP" and CommunicationDirection == "RECEIVE"
+    where FirewallAction == "DROP"
+        and CommunicationDirection == "RECEIVE"
 now() //Current time of day
     Age = now() -startTime_t
 contains //Filters a record set for data containing a case-insensitive string
@@ -65,6 +71,7 @@ tostring //Converts input to a string representation
 isnotempty //Returns true if the argument isn't an empty string, and it isn't null
     where isnotempty(IPAddress)
 materialize //Allows caching a subquery result during the time of query execution in a way that other subqueries can reference the partial result
+    //Use in conjunction with 'let', to create a variable that will be created from a query
     let _detailed_data = materialize(StormEvents | summarize Events=count() by State, EventType);
     _detailed_data
     | summarize TotalStateEvents=sum(Events) by State
@@ -75,5 +82,34 @@ materialize //Allows caching a subquery result during the time of query executio
 let //Binds a name to expressions that can refer to its bound value.
         //Values can be lambda expressions to create ad-hoc functions as part of the query.
         //Use let to create expressions over tables whose results look like a new table.
-let timeOffset = 7d;
-let discardEventId = 4688;                         
+    let timeOffset = 7d;
+    let discardEventId = 4688;
+extract //Get a match for a regular expression from a source string. Optionally, convert the extracted substring to the indicated type
+    | extend Duration = extract("Duration=([0-9.]+)", 1, Trace, typeof(real)) * time(1s)
+    | extend extract("^.{2,2}(.{4,4})", 1, Text)
+search //Search all tables everywhere for a specific string
+    search "billg"
+getschema //Produce a table that represents a tabular schema of the input. Similar to the table breakdown on the far left, but breaks down the table more
+        //Gives the tables column name, index, dataType, columnType
+    T | summarize MyCount=count() by Country | getschema
+
+
+SecurityAlert
+| mv-expand entity=todynamic(Entities)
+| where entity.Type == "account"
+| extend Account = strcat(entity.NTDomain, "\\",entity.Name)
+| summarize dcount(SystemAlertId) by Account
+| join kind=leftouter (//Join used here
+    SecurityEvent
+    | summarize make_set(EventID) by Account) on Account
+| project-away Account1
+
+let Events = MyLogTable | where type=="Event" ;//creating a variable to call with the 'join'
+Events
+| where Name == "Start"
+| project Name, City, ActivityId, StartTime=timestamp
+| join (Events//Join used here
+    | where Name == "Stop"
+        | project StopTime=timestamp, ActivityId)
+    on ActivityId
+| project City, ActivityId, StartTime, StopTime, Duration = StopTime - StartTime
