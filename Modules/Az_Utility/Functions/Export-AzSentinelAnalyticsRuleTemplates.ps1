@@ -1,16 +1,19 @@
 <#
     .NOTES
+        Tested with Powershell 7.2
         Use the Az module connect to the client/subscription the Sentinel resource is located to run this script
-        Import-Module -Name Az
-        Connect-AzAccount -Tenant '00000aaa-00aa-0000-aa00-aaa00000aaaa' -Subscription '0000aaa0-aa00-00aa-aaaa-000aaa000aa0'
+            Import-Module -Name Az
+                (Must connect to the subscription that Sentinel is located on)
+            Connect-AzAccount -Tenant '00000aaa-00aa-0000-aa00-aaa00000aaaa' -Subscription '0000aaa0-aa00-00aa-aaaa-000aaa000aa0'
+        Currently drops the output CSV in the directory the script is ran from
+    .ERRORS
+        Currently there is an error with the scrip pulling the '
     .SYNOPSIS
         This command will generate a CSV file containing the information about all the Azure Sentinel
-        Analytic rules templates.  Place an X in the first column of the CSV file for any template
-        that should be used to create a rule and then call New-RulesFromTemplateCSV.ps1 to generate
-        the rules.
+        Analytic rules templates.
     .DESCRIPTION
         This command will generate a CSV file containing the information about all the Azure Sentinel
-        Analytic rules templates. Place an X in the first column of the CSV file for any template
+        Analytic rules templates.(Place an X in the first column of the CSV file for any template
         that should be used to create a rule and then call New-RulesFromTemplateCSV.ps1 to generate
         the rules.
     .PARAMETER WorkSpaceName
@@ -22,6 +25,7 @@
     .NOTES
         AUTHOR: Gary Bushey
         LASTEDIT: 16 Jan 2020
+        https://github.com/garybushey/AzSentinelAnalyticsRules
         EDITOR: Tyler Konsonlas
         LASTEDIT: 2022 Feb 22
     .EXAMPLE
@@ -56,7 +60,7 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
     #Load the templates so that we can copy the information as needed
     #tk - URL from https://docs.microsoft.com/en-us/rest/api/securityinsights/preview/alert-rule-templates/get
     $url = "https://management.azure.com/subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$($workspaceName)/providers/Microsoft.SecurityInsights/alertruletemplates?api-version=2019-01-01-preview"
-    #tk - Calling a JSON file with the 'Invoke-RestMethod' so that Powershell can work with the data
+    #Calling a JSON file with the 'Invoke-RestMethod' so that Powershell can work with the data
     $results = (Invoke-RestMethod -Method "Get" -Uri $url -Headers $authHeader ).value
 
     foreach ($result in $results) {
@@ -64,7 +68,7 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         $description = $result.properties.Description
         #Replace any double quotes.  Commas are already taken care of
         $description = $description -replace '"', '""'
-        #TODO-tk replace '(Preview) '
+        #TODO-tk replace '(Preview) ' in the Alerts to standardize them
 
         #Generate the list of data connectors.  Using the pipe as the 
         #delimiter since it does not appear in any data connector name
@@ -117,7 +121,7 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
             'RequiredDataConnectors' = $requiredDataConnectors;
             'RuleFrequency' = $frequencyText;
             'RulePeriod' = $queryText;
-            'RuleFrequency2' = $frequencyText2;
+            'RuleFrequency2' = $frequencyText2; #Catch for some Rule frequencies that don't follow the first
             'RuleThreshold' = $ruleThresholdText;
             'Version' = $version; #Fixed to reflect version if available
             'Status' = $status #Easy way to see which templates are already installed
@@ -166,23 +170,18 @@ Function RuleThresholdText($triggerOperator, $triggerThreshold) {
     $returnText = ""
     if ($null -ne $triggerOperator) {
         $returnText = "Trigger alert if query returns "
-
         switch ($triggerOperator) {
             "GreaterThan" {
                 $returnText += "more than"
-                
             }
             "FewerThan" {
                 $returnText += "less than" 
-                
             }
             "EqualTo" {
                 $returnText += "exactly" 
-                
             }
             "NotEqualTo" {
                 $returnText += "different than" 
-                
             }
             Default { }
         }
