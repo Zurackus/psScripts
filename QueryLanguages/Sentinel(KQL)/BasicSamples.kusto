@@ -50,8 +50,6 @@ WindowsFirewall
  | where count_ > 10
  | sort by count_ //Sort by a specific column
 
-
-
 WindowsFirewall
 | where TimeGenerated > ago(7d)
 | where CommunicationDirection == "RECEIVE"

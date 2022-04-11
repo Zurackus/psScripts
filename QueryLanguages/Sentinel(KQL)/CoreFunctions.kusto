@@ -5,6 +5,7 @@ where //Filters on a specific predicate
     where FirewallAction == "DROP" and CommunicationDirection == "RECEIVE"
     where count_ > 10
     where ProcessCommandLine has_any("WebClient", "DownloadFile","DownloadData",)
+    where TimeGenerated > ago(7d) and isnotnull(Account) //look at data in the last 7 days where the Account column isn't empty
     //String predicates: ==, =~, has, contains, startswith, endswith, matches regex, etc
     //Numeric/Date predicates: ==, !=, <, >, <=, >=
     //Empty predicates: isempty(), notempty(), isnull(), notnull()
@@ -27,11 +28,15 @@ summarize //Groups the rows according to the by group columns, and calculates ag
     variance, varianceif //Calculates the variance of Expr across the group, considering the group as a sample
 render //Renders results as a graphical output
 mv-expand //Turns dynamic arrays into rows (multi-value expansion)
-union //Takes two or more tables and returns the rows of all of them
 limit (take)//Return up to the specified number of rows(max is 30,000 rows), don't go beyond about 1,000
-sort //Sort the rows of the input table into order by one or more columns
+sort (order)//Sort the rows of the input table into order by one or more columns
+    order by TimeGenerated desc //sort or order the TimeGenerated data column in descending order
 Make_list()//returns a dynamic JSON array of all the values of expression in the group
 Make_set()//returns a dynamic JSON array containing distinct values that the expression in the group
+union //Takes two or more tables and returns the rows of all of them
+    SecurityEvent //the table
+    | union Heartbeat //merging SecurityEvent table with the Heartbeat table
+    | summarize count() by Computer //showing all computers from both tables and how many times 
 join //Merge the rows of two tables to form a new table by matching values of the specified columns from each table.
     // Simple Join:
     Table1 | join (Table2) on CommonColumn, $left.Col1 == $right.Col2
@@ -41,6 +46,8 @@ join //Merge the rows of two tables to form a new table by matching values of th
     join kind = fullouter //returns everything from both tables
     join kind = leftouter //returns everything from the left table and only the things from the right table that appeard with the 'on' variable in the left table
     join kind = rightouter //returns everything from the right table and only the things from the left table that appeard with the 'on' variable in the right table
+    join kind = leftsemi //Returns only left table but only the values that mached with the 'on' variable from the right table 
+    join kind = leftanti //Returns only the rows from both tables merged that did not have a match in the 'on' variable from the right table
 
 //Core Operators
 strcat //Convert to string and concatenate
@@ -57,7 +64,7 @@ startswith //RHS is an initial subsequence of LHS
     "Fabrikam" startswith "fab"
 !startswith //RHS isn't an initial subsequence of LHS
     "Fabrikam" !startswith "kam"
-and, or //
+and, or //Self explainitory
     where FirewallAction == "DROP"
         and CommunicationDirection == "RECEIVE"
 now() //Current time of day
@@ -80,17 +87,21 @@ materialize //Allows caching a subquery result during the time of query executio
     | project State, EventType, EventPercentage, Events
     | top 10 by EventPercentage
 let //Binds a name to expressions that can refer to its bound value.
-        //Values can be lambda expressions to create ad-hoc functions as part of the query.
-        //Use let to create expressions over tables whose results look like a new table.
+    //Values can be lambda expressions to create ad-hoc functions as part of the query.
+    //Use let to create expressions over tables whose results look like a new table.
     let timeOffset = 7d;
+    | where TimeGenerated > ago(timeOffset*2) and TimeGenerated < ago(timeOffset)
     let discardEventId = 4688;
+    let watchlist = (_GetWatchlist('FeodoTracker') | project DstIP);
+    Heartbeat
+    | where ComputerIP in (watchlist)
 extract //Get a match for a regular expression from a source string. Optionally, convert the extracted substring to the indicated type
     | extend Duration = extract("Duration=([0-9.]+)", 1, Trace, typeof(real)) * time(1s)
     | extend extract("^.{2,2}(.{4,4})", 1, Text)
 search //Search all tables everywhere for a specific string
     search "billg"
 getschema //Produce a table that represents a tabular schema of the input. Similar to the table breakdown on the far left, but breaks down the table more
-        //Gives the tables column name, index, dataType, columnType
+    //Gives the tables column name, index, dataType, columnType
     T | summarize MyCount=count() by Country | getschema
 
 
