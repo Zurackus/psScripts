@@ -1,0 +1,471 @@
+{
+    "version": "Notebook/1.0",
+    "items": [
+      {
+        "type": 11,
+        "content": {
+          "version": "LinkItem/1.0",
+          "style": "tabs",
+          "links": [
+            {
+              "id": "72a5658a-96d8-427e-b037-c8d7e0e63a90",
+              "cellValue": "selectTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Alerts",
+              "subTarget": "Alerts",
+              "style": "link"
+            },
+            {
+              "id": "412b35bc-ec93-46dc-848c-475f95477064",
+              "cellValue": "selectTab",
+              "linkTarget": "parameter",
+              "linkLabel": "Malicious Traffic",
+              "subTarget": "Malicious Traffic",
+              "style": "link"
+            },
+            {
+              "id": "1d11c7a2-0bec-4e4a-9fb7-591e4538c41a",
+              "cellValue": "selectTab",
+              "linkTarget": "parameter",
+              "linkLabel": "All Traffic",
+              "subTarget": "All Traffic",
+              "style": "link"
+            }
+          ]
+        },
+        "name": "links - 6"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 9,
+              "content": {
+                "version": "KqlParameterItem/1.0",
+                "parameters": [
+                  {
+                    "id": "be68afd9-16f8-4e0a-92ba-a019093fe411",
+                    "version": "KqlParameterItem/1.0",
+                    "name": "TimeRange",
+                    "type": 4,
+                    "isRequired": true,
+                    "value": {
+                      "durationMs": 604800000
+                    },
+                    "typeSettings": {
+                      "selectableValues": [
+                        {
+                          "durationMs": 1800000
+                        },
+                        {
+                          "durationMs": 3600000
+                        },
+                        {
+                          "durationMs": 14400000
+                        },
+                        {
+                          "durationMs": 43200000
+                        },
+                        {
+                          "durationMs": 86400000
+                        },
+                        {
+                          "durationMs": 172800000
+                        },
+                        {
+                          "durationMs": 604800000
+                        },
+                        {
+                          "durationMs": 1209600000
+                        },
+                        {
+                          "durationMs": 2592000000
+                        }
+                      ],
+                      "allowCustom": true
+                    },
+                    "timeContext": {
+                      "durationMs": 86400000
+                    }
+                  },
+                  {
+                    "id": "c19cd215-fb7f-4b2e-8b4a-2b8e0080d408",
+                    "version": "KqlParameterItem/1.0",
+                    "name": "CountryParam",
+                    "label": "Country Name",
+                    "type": 2,
+                    "query": "let IP_Data = external_data(\r\n    network:string,\r\n    geoname_id:long,\r\n    continent_code:string,\r\n    continent_name:string,\r\n    country_iso_code:string,\r\n    country_name:string,\r\n    is_anonymous_proxy:bool,\r\n    is_satellite_provider:bool)\r\n    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']\r\n    with (ignoreFirstRecord=true, format=\"csv\");\r\nIP_Data\r\n| summarize by country_name\r\n| sort by country_name asc",
+                    "value": null,
+                    "typeSettings": {
+                      "additionalResourceOptions": [],
+                      "showDefault": false
+                    },
+                    "timeContext": {
+                      "durationMs": 604800000
+                    },
+                    "timeContextFromParameter": "TimeRange",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces"
+                  }
+                ],
+                "style": "pills",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "name": "parameters - 2 - Copy"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "let IP_Data = external_data(\r\n    network:string,\r\n    geoname_id:long,\r\n    continent_code:string,\r\n    continent_name:string,\r\n    country_iso_code:string,\r\n    country_name:string,\r\n    is_anonymous_proxy:bool,\r\n    is_satellite_provider:bool)\r\n    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']\r\n    with (ignoreFirstRecord=true, format=\"csv\");\r\nSecurityAlert\r\n| where TimeGenerated {TimeRange} //***\r\n| extend AlertEntities = parse_json(Entities)\r\n| mv-expand AlertEntities\r\n| extend IPAddress = tostring(AlertEntities.Address)\r\n| where isnotempty(IPAddress)\r\n| summarize count() by IPAddress\r\n| evaluate ipv4_lookup(IP_Data, IPAddress, network)\r\n| where ('{CountryParam}' == '' and country_name != \"United States\") or country_name == '{CountryParam}' //***\r\n| project IPAddress, count_////country_name or IPAddress\r\n| order by count_ desc\r\n| limit 10\r\n| render columnchart",
+                "size": 0,
+                "title": "Alerts by IP",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "customWidth": "50",
+              "name": "query - 1"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "let IP_Data =\r\n    external_data(\r\n        network:string,\r\n        geoname_id:long,\r\n        continent_code:string,\r\n        continent_name:string,\r\n        country_iso_code:string,\r\n        country_name:string,\r\n        is_anonymous_proxy:bool,\r\n        is_satellite_provider:bool)\r\n    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']\r\n    with (ignoreFirstRecord=true, format=\"csv\");\r\nSecurityAlert\r\n| where TimeGenerated {TimeRange} //***\r\n| where ProviderName == \"MDATP\"\r\n| extend Entities = parse_json(Entities)\r\n| mv-expand Entities\r\n| extend BadIPAddress = tostring(Entities.Address)\r\n| extend HostName = tostring(Entities.CompromisedEntity)\r\n| summarize count() by BadIPAddress, CompromisedEntity,DisplayName, bin(TimeGenerated, 1h)\r\n| where isnotempty(BadIPAddress)\r\n| evaluate ipv4_lookup(IP_Data, BadIPAddress, network)\r\n| where ('{CountryParam}' == '' and country_name != \"United States\") or country_name == '{CountryParam}' //***\r\n| summarize count() by country_name, BadIPAddress, CompromisedEntity, DisplayName\r\n| order by count_ desc //Added\r\n| limit 10//Added",
+                "size": 0,
+                "title": "EDR Alerts",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "customWidth": "50",
+              "name": "query - 2"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "let IP_Data =\r\n    external_data(\r\n        network:string,\r\n        geoname_id:long,\r\n        continent_code:string,\r\n        continent_name:string,\r\n        country_iso_code:string,\r\n        country_name:string,\r\n        is_anonymous_proxy:bool,\r\n        is_satellite_provider:bool)\r\n    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']\r\n    with (ignoreFirstRecord=true, format=\"csv\");\r\nSecurityAlert\r\n| where TimeGenerated {TimeRange} //***\r\n| extend AlertEntities = parse_json(Entities)\r\n| mv-expand AlertEntities\r\n| extend IPAddress = tostring(AlertEntities.Address)\r\n| summarize count() by IPAddress, DisplayName, ProviderName, bin(TimeGenerated, 1h)\r\n| where isnotempty(IPAddress)\r\n| evaluate ipv4_lookup(IP_Data, IPAddress, network)\r\n| where ('{CountryParam}' == '' and country_name != \"United States\") or country_name == '{CountryParam}' //***\r\n| project TimeGenerated, IPAddress, count_ //country_name or IPAddress\r\n| render columnchart //timechart columnchart",
+                "size": 0,
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "name": "query - 3"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectTab",
+          "comparison": "isEqualTo",
+          "value": "Alerts"
+        },
+        "name": "Alerts"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 9,
+              "content": {
+                "version": "KqlParameterItem/1.0",
+                "parameters": [
+                  {
+                    "id": "3db41c66-8df6-41f0-b056-e2dc62752cc0",
+                    "version": "KqlParameterItem/1.0",
+                    "name": "TimeRange",
+                    "type": 4,
+                    "isRequired": true,
+                    "value": {
+                      "durationMs": 604800000
+                    },
+                    "typeSettings": {
+                      "selectableValues": [
+                        {
+                          "durationMs": 1800000
+                        },
+                        {
+                          "durationMs": 3600000
+                        },
+                        {
+                          "durationMs": 14400000
+                        },
+                        {
+                          "durationMs": 43200000
+                        },
+                        {
+                          "durationMs": 86400000
+                        },
+                        {
+                          "durationMs": 172800000
+                        },
+                        {
+                          "durationMs": 604800000
+                        },
+                        {
+                          "durationMs": 1209600000
+                        },
+                        {
+                          "durationMs": 2592000000
+                        }
+                      ],
+                      "allowCustom": true
+                    },
+                    "timeContext": {
+                      "durationMs": 86400000
+                    }
+                  },
+                  {
+                    "id": "9e64ca8f-ca67-4143-be32-72c35617bf54",
+                    "version": "KqlParameterItem/1.0",
+                    "name": "CountryParam",
+                    "label": "Country Name",
+                    "type": 2,
+                    "query": "CommonSecurityLog\r\n| extend Country=MaliciousIPCountry\r\n| where isnotempty(Country) //***\r\n| where Country != \"United States\" //***\r\n| summarize by Country\r\n| sort by Country asc",
+                    "value": null,
+                    "typeSettings": {
+                      "additionalResourceOptions": [],
+                      "showDefault": false
+                    },
+                    "timeContext": {
+                      "durationMs": 604800000
+                    },
+                    "timeContextFromParameter": "TimeRange",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces"
+                  }
+                ],
+                "style": "pills",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "name": "parameters - 2"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "CommonSecurityLog\n| where TimeGenerated {TimeRange} //***\n| where DestinationIP == \"\"\n| extend Country=MaliciousIPCountry //Commented out\n| where isnotempty(Country) //***\n| where (\"{CountryParam}\" == '' and Country != \"United States\") or Country == \"{CountryParam}\" //***\n//| extend HostPort = strcat(DestinationHostName, \"-port-\", DestinationPort)\n| summarize count() by Country, DestinationHostName, DestinationPort\n| order by count_ desc\n| limit 10",
+                "size": 0,
+                "title": "Traffic: Destination Domain and Port",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "customWidth": "33",
+              "name": "Alerts by IP"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "CommonSecurityLog\r\n| where TimeGenerated {TimeRange} //***\r\n| where DestinationIP <> \"\"\r\n| extend Country=MaliciousIPCountry\r\n| where isnotempty(Country) //***\r\n| where ('{CountryParam}' == '' and Country != \"United States\") or Country == '{CountryParam}' //***\r\n| summarize count() by MaliciousIPCountry, DestinationIP, DestinationPort\r\n| order by count_ desc\r\n| limit 10",
+                "size": 0,
+                "title": "Traffic: Destination IP and Port",
+                "timeContext": {
+                  "durationMs": 86400000
+                },
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "customWidth": "33",
+              "name": "query - 1"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "CommonSecurityLog\r\n| where TimeGenerated {TimeRange} //***\r\n| where DestinationIP == \"\"\r\n| extend  Country=MaliciousIPCountry\r\n| where isnotempty(Country) //***\r\n| where ('{CountryParam}' == '' and Country != \"United States\") or Country == '{CountryParam}' //***\r\n| summarize count() by Country, MaliciousIP\r\n| order by count_ desc\r\n| limit 10",
+                "size": 0,
+                "title": "Traffic: Top 10 Malicious IPs(Sources)",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces",
+                "sortBy": [],
+                "tileSettings": {
+                  "showBorder": false,
+                  "titleContent": {
+                    "columnMatch": "IPAddress",
+                    "formatter": 1
+                  },
+                  "leftContent": {
+                    "columnMatch": "count_",
+                    "formatter": 12,
+                    "formatOptions": {
+                      "palette": "auto"
+                    },
+                    "numberFormat": {
+                      "unit": 17,
+                      "options": {
+                        "maximumSignificantDigits": 3,
+                        "maximumFractionDigits": 2
+                      }
+                    }
+                  }
+                },
+                "graphSettings": {
+                  "type": 0,
+                  "topContent": {
+                    "columnMatch": "IPAddress",
+                    "formatter": 1
+                  },
+                  "centerContent": {
+                    "columnMatch": "count_",
+                    "formatter": 1,
+                    "numberFormat": {
+                      "unit": 17,
+                      "options": {
+                        "maximumSignificantDigits": 3,
+                        "maximumFractionDigits": 2
+                      }
+                    }
+                  }
+                },
+                "chartSettings": {
+                  "xAxis": "TimeGenerated",
+                  "yAxis": [
+                    "count_"
+                  ]
+                }
+              },
+              "customWidth": "33",
+              "name": "query - 3"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "    CommonSecurityLog\r\n    | where TimeGenerated {TimeRange} //***\r\n    | extend Country=MaliciousIPCountry\r\n    | where isnotempty(Country)\r\n    | where ('{CountryParam}' == '' and Country != \"United States\") or Country == '{CountryParam}' //***\r\n    | summarize count() by Country\r\n    | order by count_ desc",
+                "size": 0,
+                "title": "Events by Country",
+                "timeContext": {
+                  "durationMs": 86400000
+                },
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "customWidth": "25",
+              "name": "query - 4"
+            },
+            {
+              "type": 3,
+              "content": {
+                "version": "KqlItem/1.0",
+                "query": "CommonSecurityLog\r\n| where TimeGenerated {TimeRange} //***\r\n| extend Country=MaliciousIPCountry\r\n| where isnotempty(Country) //***\r\n| where ('{CountryParam}' == '' and Country != \"United States\") or Country == '{CountryParam}' //***\r\n| summarize count() by Country, bin(TimeGenerated, 1h)\r\n| order by count_ desc\r\n| render timechart",
+                "size": 0,
+                "title": "Timeline: Spikes by events",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "customWidth": "75",
+              "name": "query - 5"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectTab",
+          "comparison": "isEqualTo",
+          "value": "Malicious Traffic"
+        },
+        "name": "Malicious Traffic"
+      },
+      {
+        "type": 12,
+        "content": {
+          "version": "NotebookGroup/1.0",
+          "groupType": "editable",
+          "items": [
+            {
+              "type": 9,
+              "content": {
+                "version": "KqlParameterItem/1.0",
+                "parameters": [
+                  {
+                    "id": "c90ffe17-00d0-4ffb-bb16-263bc367e4aa",
+                    "version": "KqlParameterItem/1.0",
+                    "name": "TimeRange",
+                    "type": 4,
+                    "isRequired": true,
+                    "value": {
+                      "durationMs": 604800000
+                    },
+                    "typeSettings": {
+                      "selectableValues": [
+                        {
+                          "durationMs": 1800000
+                        },
+                        {
+                          "durationMs": 3600000
+                        },
+                        {
+                          "durationMs": 14400000
+                        },
+                        {
+                          "durationMs": 43200000
+                        },
+                        {
+                          "durationMs": 86400000
+                        },
+                        {
+                          "durationMs": 172800000
+                        },
+                        {
+                          "durationMs": 604800000
+                        },
+                        {
+                          "durationMs": 1209600000
+                        },
+                        {
+                          "durationMs": 2592000000
+                        }
+                      ],
+                      "allowCustom": true
+                    },
+                    "timeContext": {
+                      "durationMs": 86400000
+                    }
+                  },
+                  {
+                    "id": "2e124dd6-bc8e-4434-abc5-428b59f62b02",
+                    "version": "KqlParameterItem/1.0",
+                    "name": "CountryParam",
+                    "label": "Country Name",
+                    "type": 2,
+                    "query": "CommonSecurityLog\r\n| extend Country=MaliciousIPCountry\r\n| where isnotempty(Country) //***\r\n| where Country != \"United States\" //***\r\n| summarize by Country\r\n| sort by Country asc",
+                    "value": null,
+                    "typeSettings": {
+                      "additionalResourceOptions": [],
+                      "showDefault": false
+                    },
+                    "timeContext": {
+                      "durationMs": 604800000
+                    },
+                    "timeContextFromParameter": "TimeRange",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces"
+                  }
+                ],
+                "style": "pills",
+                "queryType": 0,
+                "resourceType": "microsoft.operationalinsights/workspaces"
+              },
+              "name": "parameters - 2 - Copy"
+            }
+          ]
+        },
+        "conditionalVisibility": {
+          "parameterName": "selectTab",
+          "comparison": "isEqualTo",
+          "value": "All Traffic"
+        },
+        "name": "All Traffic"
+      }
+    ],
+    "fallbackResourceIds": [
+      "/subscriptions/2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8/resourcegroups/cisosentinelloganalytics_rg/providers/microsoft.operationalinsights/workspaces/cisologanalyticsworkspace"
+    ],
+    "fromTemplateId": "sentinel-UserWorkbook",
+    "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+  }

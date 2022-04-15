@@ -1,4 +1,21 @@
 //***Alerts***
+//***Parameters(Global)***
+Basic Time Parameter - {TimeRange} - Required
+Country Parameter - {CountryParam} - Dropdown, Not Required, Query
+let IP_Data = external_data(
+    network:string,
+    geoname_id:long,
+    continent_code:string,
+    continent_name:string,
+    country_iso_code:string,
+    country_name:string,
+    is_anonymous_proxy:bool,
+    is_satellite_provider:bool)
+    ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
+    with (ignoreFirstRecord=true, format="csv");
+IP_Data
+| summarize by country_name
+| sort by country_name asc
 //Alerts by IP
 let IP_Data = external_data(
     network:string,
@@ -12,18 +29,17 @@ let IP_Data = external_data(
     ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
     with (ignoreFirstRecord=true, format="csv");
 SecurityAlert
-| where TimeGenerated > ago(120h)
+| where TimeGenerated {TimeRange} //***
 | extend AlertEntities = parse_json(Entities)
 | mv-expand AlertEntities
 | extend IPAddress = tostring(AlertEntities.Address)
-| summarize count() by IPAddress
 | where isnotempty(IPAddress)
+| summarize count() by IPAddress
 | evaluate ipv4_lookup(IP_Data, IPAddress, network)
-//| where country_name != "United States"
-| where country_name == "Russia"
-|project IPAddress, count_
-|order by count_ desc
-|render columnchart 
+| where ('{CountryParam}' == '' and country_name != "United States") or country_name == '{CountryParam}' //***
+| project IPAddress, count_//Added 'country_name'
+| order by count_ desc
+| render columnchart
 //-----------------------------------------------------------------------------------------
 //EDR Alerts
 let IP_Data =
@@ -39,7 +55,7 @@ let IP_Data =
     ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
     with (ignoreFirstRecord=true, format="csv");
 SecurityAlert
-| where TimeGenerated > ago(120h)
+| where TimeGenerated {TimeRange} //***
 | where ProviderName == "MDATP"
 | extend Entities = parse_json(Entities)
 | mv-expand Entities
@@ -48,8 +64,10 @@ SecurityAlert
 | summarize count() by BadIPAddress, CompromisedEntity,DisplayName, bin(TimeGenerated, 1h)
 | where isnotempty(BadIPAddress)
 | evaluate ipv4_lookup(IP_Data, BadIPAddress, network)
-| where country_name == "Russia"
-|summarize count() by BadIPAddress, CompromisedEntity, DisplayName
+| where ('{CountryParam}' == '' and country_name != "United States") or country_name == '{CountryParam}' //***
+| summarize count() by country_name, BadIPAddress, CompromisedEntity, DisplayName
+| order by count_ desc //Added
+| limit 10//Added
 //-----------------------------------------------------------------------------------------
 //Timeline: Spikes by Alert
 let IP_Data =
@@ -65,59 +83,77 @@ let IP_Data =
     ['https://raw.githubusercontent.com/datasets/geoip2-ipv4/master/data/geoip2-ipv4.csv']
     with (ignoreFirstRecord=true, format="csv");
 SecurityAlert
-| where TimeGenerated > ago(120h)
+| where TimeGenerated {TimeRange} //***
 | extend AlertEntities = parse_json(Entities)
 | mv-expand AlertEntities
 | extend IPAddress = tostring(AlertEntities.Address)
 | summarize count() by IPAddress, DisplayName, ProviderName, bin(TimeGenerated, 1h)
 | where isnotempty(IPAddress)
 | evaluate ipv4_lookup(IP_Data, IPAddress, network)
-| where country_name != "United States"
-//|project TimeGenerated, country_name, IPAddress, ProviderName, DisplayName
-| where country_name == "Russia"
-//|project IPAddress, DisplayName,ProviderName, count_
-//|order by count_ desc
-|render timechart 
+| where ('{CountryParam}' == '' and country_name != "United States") or country_name == '{CountryParam}' //***
+| project TimeGenerated, country_name, count_ //country_name or IPAddress
+| render columnchart //timechart columnchart
 //-----------------------------------------------------------------------------------------
 //***Malicious Traffic***
-//Traffic: Destination Domain and Port
+//***Parameters(Global)***
+Basic Time Parameter - {TimeRange} - Required
+Country Parameter - {CountryParam} - Dropdown, Not Required, Query, {TimeRange}
 CommonSecurityLog
-| extend  Country=MaliciousIPCountry
-|where TimeGenerated >ago(7d)
-|where Country == "Russia"
-|where DestinationIP == ""
-//|extend HostPort = strcat(DestinationHostName, "-port-", DestinationPort)
-|summarize count() by DestinationHostName, DestinationPort
-|order by count_ desc 
+| extend Country=MaliciousIPCountry
+| where isnotempty(Country) //***
+| where Country != "United States" //***
+| summarize by Country
+| sort by Country asc
+//Traffic: Destination Domain and Port(33%)
+CommonSecurityLog
+| where TimeGenerated {TimeRange} //***
+| where DestinationIP == ""
+| extend Country=MaliciousIPCountry //Commented out
+| where isnotempty(Country) //***
+| where ("{CountryParam}" == '' and Country != "United States") or Country == "{CountryParam}" //***
+| summarize count() by Country, DestinationHostName, DestinationPort
+| order by count_ desc
+| limit 10
 //-----------------------------------------------------------------------------------------
-//Traffic: Destination IP and Port
+//Traffic: Destination IP and Port(33%)
 CommonSecurityLog
-//| extend  Country=MaliciousIPCountry
-|where TimeGenerated >ago(7d)
-|where MaliciousIPCountry == "Russia"
-|where DestinationIP <> ""
-|summarize count() by DestinationIP, DestinationPort
-|order by count_ desc
-|limit 10
+| where TimeGenerated {TimeRange} //***
+| where DestinationIP <> ""
+| extend Country=MaliciousIPCountry
+| where isnotempty(Country) //***
+| where ("{CountryParam}" == '' and Country != "United States") or Country == "{CountryParam}" //***
+| summarize count() by MaliciousIPCountry, DestinationIP, DestinationPort
+| order by count_ desc
+| limit 10
 //-----------------------------------------------------------------------------------------
-//Traffic: Top 10 Malicious IPs(Sources)
+//Traffic: Top 10 Malicious IPs(Sources)(33%)
 CommonSecurityLog
+| where TimeGenerated {TimeRange} //***
+| where DestinationIP == ""
 | extend  Country=MaliciousIPCountry
-|where TimeGenerated >ago(7d)
-|where Country == "Russia"
-|where DestinationIP == ""
-|summarize count() by MaliciousIP
-|order by count_ desc
-|limit 10
+| where isnotempty(Country) //***
+| where ("{CountryParam}" == '' and Country != "United States") or Country == "{CountryParam}" //***
+| summarize count() by Country, MaliciousIP
+| order by count_ desc
+| limit 10
 //-----------------------------------------------------------------------------------------
-//Timeline: Spikes by events, Includes log sources - cisco, etc
+//Chart for all countries excluding US(25%)
+    CommonSecurityLog
+    | where TimeGenerated {TimeRange} //***
+    | extend Country=MaliciousIPCountry
+    | where isnotempty(Country)
+    | where ("{CountryParam}" == '' and Country != "United States") or Country == "{CountryParam}" //***
+    | summarize count() by Country
+    | order by count_ desc
+//Timeline: Spikes by events, Includes log sources - cisco, etc(75%)
 CommonSecurityLog
-| extend  Country=MaliciousIPCountry
-|where TimeGenerated >ago(7d)
-|where Country == "Russia"
-|summarize count() by bin(TimeGenerated, 1h)
-|render timechart
-|extend Threshold=80
+| where TimeGenerated {TimeRange} //***
+| extend Country=MaliciousIPCountry
+| where isnotempty(Country) //***
+| where ('{CountryParam}' == '' and Country != "United States") or Country == '{CountryParam}' //***
+| summarize count() by Country, bin(TimeGenerated, 1h)
+| order by count_ desc
+| render timechart
 //-----------------------------------------------------------------------------------------
 //***All Traffic***
 //Traffic: Destination IPs by count
