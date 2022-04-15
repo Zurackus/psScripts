@@ -12,11 +12,11 @@ docker run -d -p 8000:8000 -e SPLUNK_START_ARGS='--accept-license' -e SPLUNK_PAS
 
 #You can verify the ports in use by running:
 docker port <container_id>
-docker port bb316ee5250b2ef8e40783e65c6b60aaa1cb11b60a11b5b
-
+docker port ee7b8e2986e6
+    
 #Run the following command with the container ID to display the status of the container
 docker ps -a -f id=<container_id>
-docker ps -a -f id=bb316ee5250b2ef8e40783e65c6b60aaa1cb11b60a11b5b
+docker ps -a -f id=ee7b8e2986e6
 
 #To verify the container ID, run below to review the container ID, status, and port mappings of all running containers
 docker ps
