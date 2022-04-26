@@ -5,9 +5,10 @@
             Import-Module -Name Az
                 (Must connect to the subscription that Sentinel is located on)
             Connect-AzAccount -Tenant '00000aaa-00aa-0000-aa00-aaa00000aaaa' -Subscription '0000aaa0-aa00-00aa-aaaa-000aaa000aa0'
+            Disconnect-AzAccount
         Currently drops the output CSV in the directory the script is ran from
     .ERRORS
-        Currently there is an error with the scrip pulling the '
+
     .SYNOPSIS
         This command will generate a CSV file containing the information about all the Azure Sentinel
         Analytic rules templates.
@@ -38,8 +39,10 @@
 
 Function Export-AzSentinelAnalyticsRuleTemplates {
     param (
-        [Parameter(Mandatory = $true)]  [string]$WorkSpaceName,
-        [Parameter(Mandatory = $true)]  [string]$ResourceGroupName,
+        #flip to true, comment out default 
+        [Parameter(Mandatory = $false)]  [string]$WorkSpaceName = "3PSIEM",
+        #flip to true, comment out default
+        [Parameter(Mandatory = $false)]  [string]$ResourceGroupName = "danh2",
         [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_RuleTemplates.csv" #default
     )
 
@@ -68,7 +71,6 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         $description = $result.properties.Description
         #Replace any double quotes.  Commas are already taken care of
         $description = $description -replace '"', '""'
-        #TODO-tk replace '(Preview) ' in the Alerts to standardize them
 
         #Generate the list of data connectors.  Using the pipe as the 
         #delimiter since it does not appear in any data connector name
@@ -105,25 +107,28 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         #Create and output the line of information.
         $severity = $result.properties.severity
 		$displayName = $result.properties.displayName
+        $displayName = $displayName -replace '\(Preview\) ',''#Remove the (Preview) so the displayname is more standardized
 		$kind = $result.kind
 		$name = $result.Name
         $version = $result.properties.anomalyDefinitionVersion
         $status = $result.properties.status
 
 		[pscustomobject]@{ 
-            'Selected' = " ";
-            'Severity' = $severity;
+            'Selected' = "";
+            'TW-Name' = "";
+            'TW-Criticality' = "";
+            'ID' = $name;
+            'MSSeverity' = $severity;
             'DisplayName' = $displayName;
             'Kind' = $kind;
-            'Name' = $name;
             'Description' = $description;
             'Tactics' = $tactics;
             'RequiredDataConnectors' = $requiredDataConnectors;
             'RuleFrequency' = $frequencyText;
-            'RulePeriod' = $queryText;
             'RuleFrequency2' = $frequencyText2; #Catch for some Rule frequencies that don't follow the first
+            'RulePeriod' = $queryText;
             'RuleThreshold' = $ruleThresholdText;
-            'Version' = $version; #Fixed to reflect version if available
+            #'Version' = $version;
             'Status' = $status #Easy way to see which templates are already installed
         } | Export-Csv $filename -Append -NoTypeInformation
     }
@@ -189,3 +194,6 @@ Function RuleThresholdText($triggerOperator, $triggerThreshold) {
     }
     return $returnText
 }
+
+#Comment out if you want to just use the Az_Utility Module to call this function
+Export-AzSentinelAnalyticsRuleTemplates
