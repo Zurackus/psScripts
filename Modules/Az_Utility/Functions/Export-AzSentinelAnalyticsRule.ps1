@@ -40,10 +40,10 @@
 Function Export-AzSentinelAnalyticsRules {
     param (
         #flip to true, comment out default 
-        [Parameter(Mandatory = $false)]  [string]$WorkSpaceName = "3PSIEM",
+        [Parameter(Mandatory = $false)]  [string]$WorkSpaceName = "CISOLogAnalyticsWorkspace",
         #flip to true, comment out default
-        [Parameter(Mandatory = $false)]  [string]$ResourceGroupName = "danh2",
-        [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_CurrentRules.csv" #default
+        [Parameter(Mandatory = $false)]  [string]$ResourceGroupName = "cisosentinelloganalytics_rg",
+        [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_CurrentRules_Client.csv" #default
     )
 
     if (! $Filename.EndsWith(".csv")) { $FileName += ".csv"}
