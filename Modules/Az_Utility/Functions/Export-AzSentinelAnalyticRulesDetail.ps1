@@ -10,42 +10,40 @@
     .ERRORS
 
     .SYNOPSIS
-        This command will generate a CSV file containing the information about all the Azure Sentinel
-        Analytic rules templates.
+        This command will generate a CSV file containing the information about all the active Azure Sentinel Analytic rules.
     .DESCRIPTION
-        This command will generate a CSV file containing the information about all the Azure Sentinel
-        Analytic rules templates.(Place an X in the first column of the CSV file for any template
-        that should be used to create a rule and then call New-RulesFromTemplateCSV.ps1 to generate
-        the rules.
+        This command will generate a CSV file containing the information about all the active Azure Sentinel Analytic rules.
+        To work properly, as of 5/11/2022, the below KQL needs to be ran to aquire all of the active tables over the last year.
+        Usage
+        | summarize ['Table Size'] =sum(Quantity) by ['Table Name'] =DataType
+        | order by ['Table Size'] desc
+        Once the above query has been ran, export the data into a csv or whatever format you want. Pull out all of the table names,
+        and load the variable $tables with them.
     .PARAMETER WorkSpaceName
-        Enter the Log Analytics workspace name, this is a required parameter
+        For the functions to work you will need to enter the Log Analytics workspace name, this is a required parameter
     .PARAMETER ResourceGroupName
-        Enter the Resource Group name, this is a required parameter
+        For the functions to work you will need to enter the Resource Group name, this is a required parameter
     .PARAMETER FileName
-        Enter the file name to use.  Defaults to "ruletemplates"  ".csv" will be appended to all filenames
+        Enter the file name to use.  Defaults to "Sentinel_AnalyticRulesDetail_Client.csv", but if you want to add a filename
+        ".csv" will be appended to all filenames automatically if it isn't added in the name
     .NOTES
-        AUTHOR: Gary Bushey
-        LASTEDIT: 16 Jan 2020
-        https://github.com/garybushey/AzSentinelAnalyticsRules
-        EDITOR: Tyler Konsonlas
-        LASTEDIT: 2022 Feb 22
+        AUTHOR: Tyler Konsonlas
+        LASTEDIT: 2022 May 11
     .EXAMPLE
-        Export-AzSentinelAnalyticsRuleTemplates -WorkspaceName "workspacename" -ResourceGroupName "rgname"
-        In this example you will get the file named "Sentinel_RuleTemplates.csv" generated containing all the rule templates
+        Export-AzSentinelAnalyticRulesDetail -WorkspaceName "workspacename" -ResourceGroupName "rgname"
+        In this example you will get the file named "Sentinel_AnalyticRulesDetail_Client.csv" generated containing all the rules
     .EXAMPLE
-        Export-AzSentinelAnalyticsRuleTemplates -WorkspaceName "workspacename" -ResourceGroupName "rgname" -fileName "Sentinel_RuleTemplates"
-        In this example you will get the file named "Sentinel_RuleTemplates.csv" generated containing all the rule templates
+        Export-AzSentinelAnalyticRulesDetail -WorkspaceName "workspacename" -ResourceGroupName "rgname" -fileName "Sentinel_Rules"
+        In this example you will get the file named "Sentinel_Rules.csv" generated containing all the Analytic rules
 #>
 
-Function Export-AzSentinelAnalyticsRules {
+Function Export-AzSentinelAnalyticRulesDetail {
     param (
-        #flip to true, comment out default 
-        [Parameter(Mandatory = $false)]  [string]$WorkSpaceName = "CISOLogAnalyticsWorkspace",#"3PSIEM",
-        #flip to true, comment out default
-        [Parameter(Mandatory = $false)]  [string]$ResourceGroupName = "cisosentinelloganalytics_rg",#"danh2",
-        [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_CurrentRules_Client.csv" #default
+        [Parameter(Mandatory = $true)]  [string]$WorkSpaceName,
+        [Parameter(Mandatory = $true)]  [string]$ResourceGroupName,
+        [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_AnalyticRulesDetail_Client.csv" #default
     )
-
+    #Verify the Filename ends with .csv, add if needed
     if (! $Filename.EndsWith(".csv")) { $FileName += ".csv"}
     
     #Setup the Authentication header needed for the REST calls
@@ -57,16 +55,15 @@ Function Export-AzSentinelAnalyticsRules {
         'Content-Type'  = 'application/json' 
         'Authorization' = 'Bearer ' + $token.AccessToken 
     }
-    
     $SubscriptionId = (Get-AzContext).Subscription.Id
 
-    #Second API call for all of the Table Rules
-    #Load the templates so that we can copy the information as needed
+    #Loading the API url, found at the below link, with the required variables of the environment
+    #https://docs.microsoft.com/en-us/rest/api/azure/
     $url = "https://management.azure.com/subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$($workspaceName)/providers/Microsoft.SecurityInsights/alertRules?api-version=2021-10-01"
     #Calling a JSON file with the 'Invoke-RestMethod' so that Powershell can work with the data
     $results = (Invoke-RestMethod -Method "Get" -Uri $url -Headers $authHeader ).value
 
-    #Create the list variable for all of the tables
+    #Create the list variable for all of the tables from the KQL mentioned in top 'Notes'
     $tables = @('SecurityEvent','CommonSecurityLog','InsightsMetrics','Event','DeviceEvents',
     'AADNonInteractiveUserSignInLogs','DeviceProcessEvents','DeviceRegistryEvents','BehaviorAnalytics',
     'W3CIISLog','DeviceNetworkEvents','DnsEvents','DeviceFileEvents','AWSCloudTrail','Heartbeat',
@@ -81,13 +78,14 @@ Function Export-AzSentinelAnalyticsRules {
     'AADManagedIdentitySignInLogs','IdentityIQ_CL','EmailPostDeliveryEvents','AzureMetrics','AzureDiagnostics',
     'UpdateSummary','SecurityBaselineSummary','IncidentFileActions_CL','IncidentProcessActions_CL','Sysmon')
 
+    #Begin to cycle through all of the Active rules from the environment
     foreach ($result in $results) {
         #Escape the description field so it does not cause any issues with the CSV file
         $description = $result.properties.Description
         #Replace any double quotes.  Commas are already taken care of
         $description = $description -replace '"', '""'
 
-        #Create and output the line of information.
+        #Create and output the information(all of these were found first using Postman)
 		$displayName = $result.properties.displayName
         $alertID = $result.name
         $enabledrule = $result.properties.enabled
@@ -97,34 +95,41 @@ Function Export-AzSentinelAnalyticsRules {
         $query = $result.properties.query
         $entities = $result.properties.entityMappings
         
-        #Make sure the log source is first empty
+        #Make sure the log source is empty
         $logSource = ""
-        <# - Old table code
-        #Verify the query is not empty
+
+        #Check if the query is empty
         if($query.length -gt 3){
             #Iterate through the tables, and search the query for which table is used
             foreach($table in $tables) {
-                if($query.Contains($table)) {
-                    #Add any tables that were found within the Query
-                    $logSource += $table + "|"
-                }
-            }
-        }#>
-        #New table code
-        if($query.length -gt 3){
-            #Iterate through the tables, and search the query for which table is used
-            foreach($table in $tables) {
-                if($table -eq 'Event' -or 
-                    $table -eq 'Operation' -or
+                #Tables that are short and could be used as part of other words/variables
+                if($table -eq 'Operation' -or
                     $table -eq 'Update' -or
                     $table -eq 'Perf'
                     ) {
+                    #Clear Pattern
                     $pattern = ""
+                    #Create Regex Pattern(Start line with 0+ spaces, word, single space or newline)
+                                                            #Or with the pipe '|'
+                        #Second variation(1+ space or new line, word, space or new line)
                     $pattern = '^\s*' + [regex]::Escape($table) + '[\s|\n]+|\s+' + [regex]::Escape($table) + '[\s|\n]+'
-                    if($query -match $pattern) {
+                    #Must use 'cmatch' if you want a case sensitive search
+                    if($query -cmatch $pattern) {
                         $logSource += $table + "|"
                     }
+                
                 }
+                #Separate IF statement for Event, due to it being *****ing everywhere
+                elseif($table -eq 'Event') {
+                    $pattern = ""
+                    $pattern = '^\s*' + [regex]::Escape($table) + '[\s|\n]+|\s+' + [regex]::Escape($table) + '[\s|\n]+'
+                    if($query -cmatch $pattern) {
+                        #Added variable to something easier to search in the csv output(arbitrarily picked)
+                        #You will need to still look at every Alert with Event, because people leave commented sections out
+                        #with the word Event fairly regularly
+                        $logSource += "Event-|"
+                    }
+                #For all of the tables with longer more unique names that should not be part of other variables
                 elseif($query.Contains($table)) {
                     #Add any tables that were found within the Query
                     $logSource += $table + "|"
@@ -137,9 +142,12 @@ Function Export-AzSentinelAnalyticsRules {
             $logSource = $logSource.Substring(0, $logSource.length - 1)
         }
 
+        #Clear the entity list
         $entitylist = ""
 
+        #Check if there are any Entities for the Alert
         if ($entities.length -gt 0) {
+            #Grab the Type, Identifier, and Column name, if there are Entities
             foreach($entity in $entities) {
                 $entitylist += $entity.entityType + ":"
                 $entitylist += $entity.fieldMappings.identifier + ","
@@ -152,6 +160,7 @@ Function Export-AzSentinelAnalyticsRules {
             $entitylist = $entitylist.Substring(0, $entitylist.length - 1)
         }
 
+        #Organize the csv output, and add the column headers
 		[pscustomobject]@{ 
             'DisplayName' = $displayName;
             'AlertID' = $alertID;
@@ -168,4 +177,4 @@ Function Export-AzSentinelAnalyticsRules {
 }
 
 #Comment out if you want to just use the Az_Utility Module to call this function
-Export-AzSentinelAnalyticsRules
+Export-AzSentinelAnalyticRulesDetail
