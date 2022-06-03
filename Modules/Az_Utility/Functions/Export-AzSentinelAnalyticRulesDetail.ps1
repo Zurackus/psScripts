@@ -7,8 +7,7 @@
             Connect-AzAccount -Tenant '00000aaa-00aa-0000-aa00-aaa00000aaaa' -Subscription '0000aaa0-aa00-00aa-aaaa-000aaa000aa0'
             Disconnect-AzAccount
         Currently drops the output CSV in the directory the script is ran from
-    .ERRORS
-
+    .Errors
     .SYNOPSIS
         This command will generate a CSV file containing the information about all the active Azure Sentinel Analytic rules.
     .DESCRIPTION
@@ -37,15 +36,18 @@
         In this example you will get the file named "Sentinel_Rules.csv" generated containing all the Analytic rules
 #>
 
-Function Export-AzSentinelAnalyticRulesDetail {
+Function Export-AzSentinelAnalyticRulesDetail { 
     param (
-        [Parameter(Mandatory = $true)]  [string]$WorkSpaceName,
-        [Parameter(Mandatory = $true)]  [string]$ResourceGroupName,
-        [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_AnalyticRulesDetail_Client.csv" #default
+        #flip to true, comment out default 
+        [Parameter(Mandatory = $false)]  [string]$WorkSpaceName = "CISOLogAnalyticsWorkspace",#"3PSIEM",
+        #flip to true, comment out default
+        [Parameter(Mandatory = $false)]  [string]$ResourceGroupName = "cisosentinelloganalytics_rg",#"danh2",
+        [Parameter(Mandatory = $false)] 
+        [string]$FileName = "Sentinel_AnalyticRulesDetail_Client.csv" #default
     )
     #Verify the Filename ends with .csv, add if needed
     if (! $Filename.EndsWith(".csv")) { $FileName += ".csv"}
-    
+
     #Setup the Authentication header needed for the REST calls
     $context = Get-AzContext
     $profiler = [Microsoft.Azure.Commands.Common.Authentication.Abstractions.AzureRmProfileProvider]::Instance.Profile
@@ -129,6 +131,7 @@ Function Export-AzSentinelAnalyticRulesDetail {
                         #with the word Event fairly regularly
                         $logSource += "Event-|"
                     }
+                }
                 #For all of the tables with longer more unique names that should not be part of other variables
                 elseif($query.Contains($table)) {
                     #Add any tables that were found within the Query
@@ -172,8 +175,7 @@ Function Export-AzSentinelAnalyticRulesDetail {
             'Entities' = $entitylist;
             'Query' = $query
         } | Export-Csv $filename -Append -NoTypeInformation
-    }
-    
+    }  
 }
 
 #Comment out if you want to just use the Az_Utility Module to call this function
