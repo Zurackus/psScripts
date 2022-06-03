@@ -57,12 +57,12 @@ Connect-MsolService #Needs to be converted to Az Module
 
 function Get-AzureInventoryReport {
 #Provide the subscription Id where the VMs reside
-$subscriptionId = "6cb1f02e-ded5-4987-a92a-420f11a0debb"
+$subscriptionId = ""
 
 #Provide the name of the csv file to be exported
 $reportName = "myReport.csv"
 
-Select-AzSubscription 6cb1f02e-ded5-4987-a92a-420f11a0debb
+Select-AzSubscription $subscriptionId
 $report = @()
 $vms = Get-AzVM
 $publicIps = Get-AzPublicIpAddress 
@@ -173,23 +173,6 @@ Grab the below ID's with 'Get-MsolAccountSku'
 AccountSkuId                    ActiveUnits WarningUnits ConsumedUnits
 ------------                    ----------- ------------ -------------
 hrgpros:VISIOCLIENT             10          0            8            
-hrgpros:POWER_BI_PRO            2           0            2            
-hrgpros:SPZA_IW                 10000       0            0            
-hrgpros:ENTERPRISEPACK          510         0            406          
-hrgpros:FLOW_FREE               10000       0            58           
-hrgpros:MCOEV                   255         0            229          
-hrgpros:MCOPSTN1                225         0            232          
-hrgpros:Win10_VDA_E3            230         0            0            
-hrgpros:PHONESYSTEM_VIRTUALUSER 10          0            4            
-hrgpros:POWERAPPS_VIRAL         10000       0            1            
-hrgpros:MEETING_ROOM            1           0            1            
-hrgpros:POWER_BI_STANDARD       1000000     0            15           
-hrgpros:MCOPSTNC                10000000    0            0            
-hrgpros:TEAMS_EXPLORATORY       100         0            2            
-hrgpros:EMS                     230         0            0            
-hrgpros:MCOMEETADV              65          0            13           
-hrgpros:SPE_E3                  280         0            134          
-hrgpros:PROJECTPROFESSIONAL     5           0            3  
 #>
 }
 
