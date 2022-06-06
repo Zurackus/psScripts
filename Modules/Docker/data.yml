@@ -1,0 +1,14 @@
+---
+name: The Ultimate Docker Course
+price: 149
+is_published: true
+#List/array
+#Must have the hyphons and indent
+tags:
+  - software
+  - devops
+#Object within an object
+#Must be indented and follow above rules
+author:
+  first_name: Mosh
+  last_name: Hamedani

@@ -1,0 +1,88 @@
+version: '3.3'
+#https://hub.docker.com/r/binhex/arch-delugevpn/
+
+services:
+  arch-delugevpn:
+    container_name: 'delugevpn'
+    image: binhex/arch-delugevpn
+    cap-add:
+      - NET_ADMIN
+    ports:
+    #WebUI: http://<hostip>:8112
+    #Default password: 'deluge'
+      - '8112:8112'
+    #Access Privoxy
+    #Point all apps to http://<hostip>:8118
+      - '8118:8118'
+      - '58846:58846'
+      - '58946:58946'
+    volumes:
+    #NetworkShare\downloads
+      - '/mnt/v:/data'
+    #Default Location: /apps/docker/deluge/config:/config
+      - '/apps/docker/deluge/config:/config'
+    #Default Location: /etc/localtime:/etc/localtime:ro
+      - '/etc/localtime:/etc/localtime:ro'
+    environment:
+      - VPN_ENABLED: 'yes'
+      - VPN_USER: #vpn username
+      - VPN_PASS: #vpn password
+    #<pia|airvpn|custom>
+      - VPN_PROV: 'custom'
+    #<openvpn|wireguard>
+      - VPN_CLIENT: 'openvpn'
+      - VPN_OPTIONS: 'none'
+      - STRICT_PORT_FORWARD: 'yes'
+      - ENABLE_PRIVOXY: 'no'
+    #Local subnet where the container is running in cidr notation
+      - LAN_NETWORK: 10.115.10.0/24
+    #84.200.x.x = DNS Watch
+    #37.235.x.x = FreeDNS
+    #1.x.x.x = Cloudflare
+    #Original defaul ips: 84.200.69.80,37.235.1.174,1.1.1.1,37.235.1.177,84.200.70.40,1.0.0.1
+      - NAME_SERVERS: 1.1.1.1,1.0.0.1
+    #<info|warning|error|none|debug|trace|garbage>
+      - DELUGE_DAEMON_LOG_LEVEL: 'info'
+    #<info|warning|error|none|debug|trace|garbage>
+      - DELUGE_WEB_LOG_LEVEL: 'info'
+    #<port number(s)>
+    #- VPN_INPUT_PORTS: 
+    #<port number(s)>
+    #- VPN_OUTPUT_PORTS: 
+    #<true|false>
+      - DEBUG: 'false'
+      - UMASK: '000'
+    #PUID and GUID will indicate the user you will use to run the Container
+    #To find them, run in the shell of the PC: 'id <username>'
+    #User ID (PUID)
+      - PUID: '1000'
+    #Group ID (PGID)
+      - PGID: '1000'
+
+docker run -d \
+    --cap-add=NET_ADMIN \
+    -p 8112:8112 \
+    -p 8118:8118 \
+    -p 58846:58846 \
+    -p 58946:58946 \
+    --name=delugevpn \
+    -v /mnt/v:/data \
+    -v /apps/docker/deluge/config:/config \
+    -v /etc/localtime:/etc/localtime:ro \
+    -e VPN_ENABLED=yes \
+    -e VPN_USER=eumqle7h8a8cj78cikq4o5gv \
+    -e VPN_PASS=sgfz43bw7v7zt63usnv8h4xr \
+    -e VPN_PROV=custom \
+    -e VPN_CLIENT=openvpn \
+    -e VPN_OPTIONS=none \
+    -e STRICT_PORT_FORWARD=yes \
+    -e ENABLE_PRIVOXY=no \
+    -e LAN_NETWORK=10.115.10.0/24 \
+    -e NAME_SERVERS=1.1.1.1,1.0.0.1 \
+    -e DELUGE_DAEMON_LOG_LEVEL=info \
+    -e DELUGE_WEB_LOG_LEVEL=info \
+    -e DEBUG=false \
+    -e UMASK=000 \
+    -e PUID=1000 \
+    -e PGID=1000 \
+    binhex/arch-delugevpn

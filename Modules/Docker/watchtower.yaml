@@ -1,0 +1,12 @@
+version: "3"
+#https://containrrr.dev/watchtower/
+
+services:
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP: 'TRUE'
+      - WATCHTOWER_RUN_ONCE: 'TRUE'
+      - WATCHTOWER_DEBUG: 'TRUE'

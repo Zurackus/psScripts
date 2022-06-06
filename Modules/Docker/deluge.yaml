@@ -1,0 +1,19 @@
+---
+version: "2.1"
+services:
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=American/Los_Angeles
+      - DELUGE_LOGLEVEL=error #optional
+    volumes:
+      - /apps/docker/deluge/config:/config
+      - /mnt/v/downloads:/downloads
+    ports:
+      - 8112:8112
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
