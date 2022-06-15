@@ -11,7 +11,7 @@ services:
       - DELUGE_LOGLEVEL=error #optional
     volumes:
       - /apps/docker/deluge/config:/config
-      - /mnt/v/downloads:/downloads
+      - /mnt/v:/downloads
     ports:
       - 8112:8112
       - 6881:6881

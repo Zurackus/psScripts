@@ -1,8 +1,8 @@
 docker run -d \
     -p 7878:7878 \
     --name=radarr \
-    -v /mnt/v/downloads/Media:/media \
-    -v /mnt/v/downloads:/data \
+    -v /mnt/v/incoming/Media:/media \
+    -v /mnt/v/incoming:/data \
     -v /apps/docker/radarr/config:/config \
     -v /etc/localtime:/etc/localtime:ro \
     -e UMASK=000 \
