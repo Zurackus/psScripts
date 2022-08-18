@@ -7,7 +7,7 @@
             Connect-AzAccount -Tenant '00000aaa-00aa-0000-aa00-aaa00000aaaa' -Subscription '0000aaa0-aa00-00aa-aaaa-000aaa000aa0'
             Disconnect-AzAccount
         Currently drops the output CSV in the directory the script is ran from
-    .Errors
+    .ERRORS
     .SYNOPSIS
         This command will generate a CSV file containing the information about all the active Azure Sentinel Analytic rules.
     .DESCRIPTION

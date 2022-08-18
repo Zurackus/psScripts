@@ -10,6 +10,7 @@ where //Filters on a specific predicate
     //Numeric/Date predicates: ==, !=, <, >, <=, >=
     //Empty predicates: isempty(), notempty(), isnull(), notnull()
 extend //Creates a calculated column and adds it to the result set
+    extend threshhold=80//Adds a threshholdline on a graphical chart
 project //Selects the columns to include in the order specified and can do what 'extend' does
     project-away //Selects the columns to exclude from the output
     project-keep //Selects the columns to keep in the output

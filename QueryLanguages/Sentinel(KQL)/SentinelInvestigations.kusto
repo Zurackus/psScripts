@@ -1,0 +1,28 @@
+//Review Sentinel Activity
+AzureActivity
+| where OperationNameValue startswith "MICROSOFT.SECURITYINSIGHTS"
+| where isnotempty(OperationName)
+| where OperationName != "Create Incident Comments"
+| where OperationName != "Update Incidents"
+| where OperationName != "Update Alert Rules"
+//| where OperationName != "Check user authorization and license"
+| where OperationName != "Microsoft.SecurityInsights/incidents/comments/write"
+| where ActivityStatus != 'Failed'
+//| where OperationName != ""
+//| where OperationNameValue != "Microsoft.SecurityInsights/dataConnectorsCheckRequirements/action"
+//| where OperationNameValue != ""
+
+//Review Sentinel ingestion lags
+let startDate = ago(150d);
+SecurityIncident
+| where TimeGenerated > startDate
+| extend LatencyInMinutes = datetime_diff('minute', ingestion_time(), TimeGenerated)
+| project TimeGenerated, ingestion_time(), LatencyInMinutes
+| summarize avg(LatencyInMinutes) by bin(TimeGenerated, 1h)
+| render timechart
+| extend upper=15
+
+//Review for a specific timeperiod
+SecurityAlert
+| where TimeGenerated between (datetime(2022-06-07 02:00:00) .. 10h)
+| summarize count() by DisplayName
