@@ -64,9 +64,10 @@ Function New-AzSentinelAnalyticsRulesFromCSV {
         if ($selected.ToUpper() -eq "X") {
             $name = $_.Name
             $kind = $_.Kind
-            $displayName = $_.DisplayName
+            $tempCheck = $_.DisplayName
+            $displayName = $_.TWName
             #Check to see if there is a template that matches the name (there better be!)
-            $template = $results | Where-Object { $_.name -eq $name }
+            $template = $results | Where-Object { $_.name -eq $name}
             #If we did find a match....
             if ($null -ne $template) {
                 $body = ""

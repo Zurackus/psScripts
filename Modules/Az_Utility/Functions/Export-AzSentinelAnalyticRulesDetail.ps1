@@ -42,8 +42,7 @@ Function Export-AzSentinelAnalyticRulesDetail {
         [Parameter(Mandatory = $false)]  [string]$WorkSpaceName = "CISOLogAnalyticsWorkspace",#"3PSIEM",
         #flip to true, comment out default
         [Parameter(Mandatory = $false)]  [string]$ResourceGroupName = "cisosentinelloganalytics_rg",#"danh2",
-        [Parameter(Mandatory = $false)] 
-        [string]$FileName = "Sentinel_AnalyticRulesDetail_Client.csv" #default
+        [Parameter(Mandatory = $false)]  [string]$FileName = "Sentinel_AnalyticRulesDetail_Client.csv" #default
     )
     #Verify the Filename ends with .csv, add if needed
     if (! $Filename.EndsWith(".csv")) { $FileName += ".csv"}
@@ -66,7 +65,7 @@ Function Export-AzSentinelAnalyticRulesDetail {
     $results = (Invoke-RestMethod -Method "Get" -Uri $url -Headers $authHeader ).value
 
     #Create the list variable for all of the tables from the KQL mentioned in top 'Notes'
-    $tables = @('SecurityEvent','CommonSecurityLog','InsightsMetrics','Event','DeviceEvents',
+    $tables = @('SecurityEvent','CommonSecurityLog','InsightsMetrics','Event','DeviceEvents','AkamaiSIEMEvent',
     'AADNonInteractiveUserSignInLogs','DeviceProcessEvents','DeviceRegistryEvents','BehaviorAnalytics',
     'W3CIISLog','DeviceNetworkEvents','DnsEvents','DeviceFileEvents','AWSCloudTrail','Heartbeat',
     'DeviceImageLoadEvents','Syslog','DeviceFileCertificateInfo','Perf','OfficeActivity','SigninLogs',

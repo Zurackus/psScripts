@@ -43,7 +43,7 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
         [Parameter(Mandatory = $false)]  [string]$WorkSpaceName = "3PSIEM",
         #flip to true, comment out default
         [Parameter(Mandatory = $false)]  [string]$ResourceGroupName = "danh2",
-        [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_RuleTemplates.csv" #default
+        [Parameter(Mandatory = $false)] [string]$FileName = "Sentinel_RuleTemplates2.0.csv" #default
     )
 
     if (! $Filename.EndsWith(".csv")) { $FileName += ".csv"}
@@ -62,74 +62,109 @@ Function Export-AzSentinelAnalyticsRuleTemplates {
 
     #Load the templates so that we can copy the information as needed
     #tk - URL from https://docs.microsoft.com/en-us/rest/api/securityinsights/preview/alert-rule-templates/get
-    $url = "https://management.azure.com/subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$($workspaceName)/providers/Microsoft.SecurityInsights/alertruletemplates?api-version=2019-01-01-preview"
+    $url = "https://management.azure.com/subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroupName)/providers/Microsoft.OperationalInsights/workspaces/$($workspaceName)/providers/Microsoft.SecurityInsights/alertruletemplates?api-version=2021-10-01"
     #Calling a JSON file with the 'Invoke-RestMethod' so that Powershell can work with the data
     $results = (Invoke-RestMethod -Method "Get" -Uri $url -Headers $authHeader ).value
 
     foreach ($result in $results) {
+        ###--Description--###
         #Escape the description field so it does not cause any issues with the CSV file
         $description = $result.properties.Description
         #Replace any double quotes.  Commas are already taken care of
         $description = $description -replace '"', '""'
 
-        #Generate the list of data connectors.  Using the pipe as the 
-        #delimiter since it does not appear in any data connector name
-        $requiredDataConnectors = ""
-        foreach ($dc in $result.properties.requiredDataConnectors) {
-            $requiredDataConnectors += $dc.connectorId + "|" 
-        }
-        #If we have an entry, remove the last pipe character
-        if ("" -ne $requiredDataConnectors) {
-            $requiredDataConnectors = $requiredDataConnectors.Substring(0, $requiredDataConnectors.length - 1)
-        }
-
+        ###--Tactics--###
         #Generate the list of tactics.  Using the pipe as the 
         #delimiter since it does not appear in any data connector name
         $tactics = ""
         foreach ($tactic in $result.properties.tactics) { 
-            $tactics += $tactic + "|"
+            $tactics += $tactic + ","
         }
         #If we have an entry, remove the last pipe character
         if ("" -ne $tactics) {
             $tactics = $tactics.Substring(0, $tactics.length - 1)
         }
 
+        ###--Frequency--###
         #Translate the query frequency and period text into something a bit more readable.  
         #Handles simple translations only.
         $frequencyText = ConvertISO8601ToText -queryFrequency $result.properties.queryFrequency  -type "Frequency"
         $queryText = ConvertISO8601ToText -queryFrequency $result.properties.queryPeriod -type "Query"
-        #tk - found that some of the Alerts had the label 'frequency' rather than the two above options
-        $frequencyText2 = ConvertISO8601ToText -queryFrequency $result.properties.frequency -type "Frequency2"
 
+        ###--Threshold--###
         #Translate the threshold values into some more readable.
         $ruleThresholdText = RuleThresholdText -triggerOperator $result.properties.triggerOperator -triggerThreshold $result.properties.triggerThreshold
+
+
+        ###--Entities--###
+        #Clear the entity list
+        $entitylist = ""
+        $entities = $result.properties.entityMappings
+        if ($entities.length -gt 0) {
+            #Grab the Type, Identifier, and Column name, if there are Entities
+            foreach($entity in $entities) {
+                $entitylist += $entity.entityType + ":"
+                $entitylist += $entity.fieldMappings.identifier + ","
+                $entitylist += $entity.fieldMappings.columnname + "|"
+            }
+        }
+        #If we have an entry, remove the last pipe character
+        if ($entitylist.length -gt 3) {
+            $entitylist = $entitylist.Substring(0, $entitylist.length - 1)
+        }
+
+        ###--DataConnectors & LogTables--###
+        #Clear the entity list
+        $DataConnectorList = ""
+        $LogTableList = ""
+        $DataConnectors = $result.properties.requiredDataConnectors
+        if ($DataConnectors.length -gt 0) {
+            #Grab the Type, Identifier, and Column name, if there are Entities
+            foreach($DataConnector in $DataConnectors) {
+                $DataConnectorList += $DataConnector.connectorId + ","
+                    foreach ($LogTable in $DataConnector.dataTypes) { 
+                        $LogTableList += $LogTable + ","
+                    }
+            }
+        }
+        #If we have an entry, remove the last pipe character
+        if ($DataConnectorList.length -gt 3) {
+            $DataConnectorList = $DataConnectorList.Substring(0, $DataConnectorList.length - 1)
+        }
+        #If we have an entry, remove the last pipe character
+        if ("" -ne $LogTableList) {
+            $LogTableList = $LogTableList.Substring(0, $LogTableList.length - 1)
+        }
 
         #Create and output the line of information.
         $severity = $result.properties.severity
 		$displayName = $result.properties.displayName
         $displayName = $displayName -replace '\(Preview\) ',''#Remove the (Preview) so the displayname is more standardized
-		$kind = $result.kind
+		$twName = "_TW_" + $displayName
+        $kind = $result.kind
 		$name = $result.Name
-        $version = $result.properties.anomalyDefinitionVersion
+        $version = $result.properties.version
         $status = $result.properties.status
+        $query = $result.properties.query
 
 		[pscustomobject]@{ 
             'Selected' = "";
-            'TW-Name' = "";
-            'TW-Criticality' = "";
+            'TWName' = $twName;
             'ID' = $name;
+            'Version' = $version;
             'MSSeverity' = $severity;
             'DisplayName' = $displayName;
             'Kind' = $kind;
             'Description' = $description;
             'Tactics' = $tactics;
-            'RequiredDataConnectors' = $requiredDataConnectors;
+            'Entities' = $entitylist;
+            'DataConnectors' = $DataConnectorList;
+            'LogTables' = $LogTableList
             'RuleFrequency' = $frequencyText;
-            'RuleFrequency2' = $frequencyText2; #Catch for some Rule frequencies that don't follow the first
             'RulePeriod' = $queryText;
             'RuleThreshold' = $ruleThresholdText;
-            #'Version' = $version;
-            'Status' = $status #Easy way to see which templates are already installed
+            'Status' = $status; #Easy way to see which templates are already installed
+            'KQL' = $query
         } | Export-Csv $filename -Append -NoTypeInformation
     }
 }
