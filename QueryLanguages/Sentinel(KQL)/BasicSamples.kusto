@@ -274,3 +274,26 @@ m
 |  where n between(1500 .. 2000);
 
 Distinct $table
+//----------------------------------------------------------------------------------------------------------------
+//Check for number of Deny DoS events within window
+//Only triggered when the 'Threshhold' is exceeded
+let timeframe = 30m; //Akamai has this set to 3 minutes
+let DoS_threshold = 5; //Minimum events within the window before alerting
+//This first table call is to get a count within the above window
+AkamaiSIEMEvent
+| where TimeGenerated > ago(timeframe)
+| where RuleMessages has "DoS Attackers"
+| where DvcAction has "Deny"
+//Summarizing on a value common across all of the logs this is counting
+//This will also be the value the join is used on
+| summarize count() by EventVendor
+//Check if the count exceeds the threshold
+| where count_ > DoS_threshold
+//Joining so that IF the threshold is exceeded, all of the logs are returned
+| join ( AkamaiSIEMEvent
+	//Same filters as above
+    | where TimeGenerated > ago(timeframe)
+    | where RuleMessages contains "DoS Attackers"
+    | where DvcAction has "Deny") on EventVendor //Join on common value
+//project away the duplicated columns/unnecessary ones
+| project-away count_, EventVendor1
