@@ -1,0 +1,64 @@
+version: '3'
+# Notes:
+# Create the config.yaml file before spinning up the Compose file, doesn't need to be filled out yet though
+# 
+services:
+  traefik:
+  #Come back every 2-3 months and manually update
+  #Some of the updates can break settings
+    image: traefik:v2.9 #Use a set version here
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+    ports: #ports exposed
+      - 80:80
+      - 443:443
+    environment:
+      - CF_API_EMAIL=tkonsonlas26@outlook.com
+      - CF_DNS_API_TOKEN=YOUR_API_TOKEN #grab when creating docker
+      # - CF_API_KEY=YOUR_API_KEY
+      # be sure to use the correct one depending on if you are using a token or key
+    volumes:
+      - /etc/localtime:/etc/localtime:ro #Grab local time
+      #- /var/run/docker.sock:/var/run/docker.sock:ro #Ability to interact with other dockers
+      - /home/username/traefik/data/traefik.yaml:/traefik.yaml:ro #Traefik specific Settings
+      - /home/username/traefik/data/acme.json:/acme.json #Storage of Certificates
+      - /home/username/traefik/data/config.yaml:/config.yaml:ro #Save settings/set interactions with other dockers
+    labels:
+      - "traefik.enable=true" #
+      - "traefik.http.routers.traefik.entrypoints=http"
+      - "traefik.http.routers.traefik.rule=Host(`dashboard.local.krpros.org`)" #expose dashboard
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=USER:BASIC_AUTH_PASSWORD" #update with the user/password to be used
+      - "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.traefik.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.traefik-secure.entrypoints=https"
+      - "traefik.http.routers.traefik-secure.rule=Host(`dashboard.local.krpros.org`)"
+      - "traefik.http.routers.traefik-secure.middlewares=traefik-auth" #Middlewares-auth
+      - "traefik.http.routers.traefik-secure.tls=true"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare" #cert provider
+      - "traefik.http.routers.traefik-secure.tls.domains[0].main=.local.krpros.org" #requesting certificate URL certificate
+      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.local.krpros.org" #core URL certificate
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+    depends_on:
+      - dockersocket
+
+  dockersocket:
+    container_name: dockersocket
+    image: tecnativa/docker-socket-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - proxy
+    environment:
+      CONTAINERS: 1
+      POST: 0
+    privileged: true
+    restart: unless-stopped
+
+networks:
+  proxy: #network name
+    external: true

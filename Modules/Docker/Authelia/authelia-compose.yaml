@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  authelia:
+    image: authelia/authelia
+    container_name: authelia
+    volumes:
+      - ./config:/config
+    networks:
+      - proxy #match whatever traefik is using
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.authelia.rule=Host(`auth.local.krpros.org`)' #update with your domain, update external record
+      - 'traefik.http.routers.authelia.entrypoints=https' #force https
+      - 'traefik.http.routers.authelia.tls=true' #use tls
+      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.local.krpros.org' #update to auth, hostname
+      - 'traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true' #
+      - 'traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email'
+    expose:
+      - 9091
+    restart: unless-stopped
+    environment:
+      - TZ=America/Los_Angeles
+    healthcheck:
+      disable: true
+networks:
+  proxy:
+    external: true

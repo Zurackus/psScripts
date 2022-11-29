@@ -1,71 +1,116 @@
----
-version: "2.1"
+version: "3.1"
+# Sonarr      - 8989 
+# Radarr      - 7878
+# Lidarr      - 8686
+# Readarr     - 8787
+# Readarr-ab  - 8788
+# Prowlarr    - 9696
+# Bazarr      - 6767
+###############
 services:
-  prowlarr: #Indexer
-    image: lscr.io/linuxserver/prowlarr:develop
-    container_name: prowlarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=American/Los_Angeles
-    volumes:
-      - /apps/docker/prowlarr/config:/config
-    ports:
-      - 9696:9696
-    restart: unless-stopped
-  lidarr: #Music
-    image: lscr.io/linuxserver/lidarr:latest
-    container_name: lidarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=American/Los_Angeles
-    volumes:
-      - /apps/docker/lidarr/config:/config
-      - /mnt/v/Music:/music #optional
-      - /mnt/v:/downloads #optional
-    ports:
-      - 8686:8686
-    restart: unless-stopped
-  radarr: #Movies
-    image: lscr.io/linuxserver/radarr:latest
-    container_name: radarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=American/Los_Angeles
-    volumes:
-      - /apps/docker/radarr/config:/config
-      - /mnt/v/Movies:/movies #optional
-      - /mnt/v:/downloads #optional
-    ports:
-      - 7878:7878
-    restart: unless-stopped
-  readarr: #eBooks/Audiobooks
-    image: lscr.io/linuxserver/readarr:develop
-    container_name: readarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=American/Los_Angeles
-    volumes:
-      - /apps/docker/readarr/config:/config
-      - /mnt/v/eBooks:/books #optional
-      - /mnt/v:/downloads #optional
-    ports:
-      - 8787:8787
-    restart: unless-stopped
-  sonarr: #TVseries
+############### Movies ###############
+  sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=American/Los_Angeles
+      - PUID=13001
+      - PGID=13000
+      - UMASK=002
+      - TZ=America/Los_Angeles
     volumes:
-      - /apps/docker/sonarr/config:/config
-      - /mnt/v/TVseries:/tv #optional
-      - /mnt/v:/downloads #optional
+      - /media/docker/sonarr-config:/config
+      - /media/drive/data:/data
     ports:
       - 8989:8989
+    restart: unless-stopped
+############### TV Series ###############
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=13002
+      - PGID=13000
+      - UMASK=002
+      - TZ=America/Los_Angeles
+    network_mode: bridge
+    volumes:
+      - /media/docker/radarr-config:/config
+      - /media/drive/data:/data
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+############### Music ###############
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    environment:
+      - PUID=13003
+      - PGID=13000
+      - UMASK=002
+      - TZ=America/Los_Angeles
+    volumes:
+      - /media/docker/lidarr-config:/config
+      - /media/drive/data:/data
+    ports:
+      - 8686:8686
+    restart: unless-stopped
+############### Ebooks ###############
+  readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr
+    environment:
+      - PUID=13004
+      - PGID=13000
+      - UMASK=002
+      - TZ=America/Los_Angeles
+    volumes:
+      - /media/docker/readarr-config:/config
+      - /media/drive/data:/data
+    ports:
+      - 8787:8787
+    restart: unless-stopped
+############### Audiobooks ###############
+  readarr-ab:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr-ab
+    environment:
+      - PUID=13007
+      - PGID=13000
+      - UMASK=002
+      - TZ=America/Los_Angeles
+    volumes:
+      - /media/docker/readarr-ab-config:/config
+      - /media/drive/data:/data
+    ports:
+      - 8788:8787
+    restart: unless-stopped
+############### Indexer ###############
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    environment:
+      - PUID=13005
+      - PGID=13000
+      - UMASK=002
+      - TZ=America/Los_Angeles
+    volumes:
+      - /media/docker/prowlarr-config:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+############### Subtitles ###############
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=13006
+      - PGID=13000
+      - UMASK=002
+      - TZ=America/Los_Angeles
+    volumes:
+      - /media/docker/bazarr-config:/config
+      - /media/drive/data/media/movies:/movies
+      - /media/drive/data/media/tv:/tv
+    ports:
+      - 6767:6767
     restart: unless-stopped

@@ -1,12 +1,15 @@
 version: "3"
+############### Automate Updates ###############
 #https://containrrr.dev/watchtower/
-
 services:
   watchtower:
     image: containrrr/watchtower
     volumes:
+    #host:container
       - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - WATCHTOWER_CLEANUP: 'TRUE'
-      - WATCHTOWER_RUN_ONCE: 'TRUE'
-      - WATCHTOWER_DEBUG: 'TRUE'
+    command: --debug --run-once --cleanup
+#    environment:
+#      - WATCHTOWER_CLEANUP: 'TRUE' #--cleanup
+#      - WATCHTOWER_RUN_ONCE: 'TRUE' #--run-once
+#      - WATCHTOWER_DEBUG: 'TRUE' #--debug
+

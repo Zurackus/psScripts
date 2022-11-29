@@ -1,0 +1,157 @@
+  traefik:
+      image: traefik:latest
+      container_name: $traefik
+      restart: always
+      healthcheck:
+          test: grep -qr "traefik" /proc/*/status || exit 1
+          interval: 1m
+          timeout: 30s
+          retries: 3
+      ports:
+          - 80:80
+          - 443:443
+      volumes:
+          - /etc/localtime:/etc/localtime:ro
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+          - $DATA_LOCATION/$SERVICE/config/traefik.yml:/traefik.yml:ro
+          - $DATA_LOCATION/$SERVICE/config/config.yml:/config.yml:ro
+          - $DATA_LOCATION/$SERVICE/config/acme.json:/acme.json
+      labels:
+          autoupdate: "monitor"
+          traefik.enable: true
+          traefik.http.routers.$SERVICE.entrypoints: https
+          traefik.http.routers.$SERVICE.rule: Host("$URL") #
+          traefik.http.routers.$SERVICE.service: api@internal
+          traefik.http.routers.$SERVICE.middlewares: auth
+          traefik.http.middlewares.auth.basicauth.users: $ADMIN_PASS
+      networks:
+          - default
+########
+version: "3.8"
+networks:
+  net:
+    driver: bridge
+services:
+# traefik - 80:8080/443:8443
+# authelia - 9091
+# heimdall - 443
+############### Reverse Proxy ###############
+  traefik: 
+    container_name: traefik
+    image: traefik:latest
+    restart: unless-stopped
+    command:
+      - '--api=true'
+      - '--api.dashboard=true'
+      - '--api.insecure=false'
+      - '--pilot.dashboard=false'
+      - '--global.sendAnonymousUsage=false'
+      - '--global.checkNewVersion=false'
+      - '--log=true'
+      - '--log.level=DEBUG'
+      - '--log.filepath=/config/traefik.log'
+      - '--providers.docker=true'
+      - '--providers.docker.exposedByDefault=false'
+      - '--entryPoints.http=true'
+      - '--entryPoints.http.address=:8080/tcp'
+      - '--entryPoints.http.http.redirections.entryPoint.to=https'
+      - '--entryPoints.http.http.redirections.entryPoint.scheme=https'
+      ## Please see the Forwarded Header Trust section of the Authelia Traefik Integration documentation.
+      # - '--entryPoints.http.forwardedHeaders.trustedIPs=10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,fc00::/7'
+      # - '--entryPoints.http.proxyProtocol.trustedIPs=10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,fc00::/7'
+      - '--entryPoints.http.forwardedHeaders.insecure=false'
+      - '--entryPoints.http.proxyProtocol.insecure=false'
+      - '--entryPoints.https=true'
+      - '--entryPoints.https.address=:8443/tcp'
+      ## Please see the Forwarded Header Trust section of the Authelia Traefik Integration documentation.
+      # - '--entryPoints.https.forwardedHeaders.trustedIPs=10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,fc00::/7'
+      # - '--entryPoints.https.proxyProtocol.trustedIPs=10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,fc00::/7'
+      - '--entryPoints.https.forwardedHeaders.insecure=false'
+      - '--entryPoints.https.proxyProtocol.insecure=false'
+    networks:
+      net: {}
+    ports:
+      - "80:8080"
+      - "443:8443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /media/docker/traefik-config:/config
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.api.rule=Host(`traefik.example.com`)'
+      - 'traefik.http.routers.api.entryPoints=https'
+      - 'traefik.http.routers.api.tls=true'
+      - 'traefik.http.routers.api.service=api@internal'
+      - 'traefik.http.routers.api.middlewares=authelia@docker'
+############### Authentication ###############
+  authelia:
+    container_name: authelia
+    image: authelia/authelia
+    restart: unless-stopped
+    expose:
+      - 9091
+    volumes:
+      - /media/docker/authelia-config:/config
+    networks:
+      - proxy
+    environment:
+      - TZ=America/Los_Angeles
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.authelia.rule=Host(`auth.krpros.org`)'
+      - 'traefik.http.routers.authelia.entryPoints=https'
+      - 'traefik.http.routers.authelia.tls=true'
+      - 'traefik.http.middlewares.authelia.forwardAuth.address=http://authelia:9091/api/verify?rd=https://auth.krpros.org'
+      - 'traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader=true'
+      - 'traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email'
+      #- 'traefik.http.middlewares.authelia-basic.forwardAuth.address=http://authelia:9091/api/verify?auth=basic'
+      #- 'traefik.http.middlewares.authelia-basic.forwardAuth.trustForwardHeader=true'
+      #- 'traefik.http.middlewares.authelia-basic.forwardAuth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email'
+    healthcheck:
+      disable: true
+networks:
+  proxy:
+    exter
+############### ??? ###############
+  nextcloud:
+    container_name: nextcloud
+    image: linuxserver/nextcloud
+    restart: unless-stopped
+    networks:
+      net: {}
+    expose:
+      - 443
+    volumes:
+      - /media/docker/nextcloud-config:/config
+      - ${PWD}/data/nextcloud/data:/data
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "Australia/Melbourne"
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.nextcloud.rule=Host(`nextcloud.krpros.org`)'
+      - 'traefik.http.routers.nextcloud.entryPoints=https'
+      - 'traefik.http.routers.nextcloud.tls=true'
+      - 'traefik.http.routers.nextcloud.middlewares=authelia@docker' #
+############### visual breakdown of all links ###############
+  heimdall:
+    container_name: heimdall
+    image: linuxserver/heimdall
+    restart: unless-stopped
+    networks:
+      net: {}
+    expose:
+      - 443
+    volumes:
+      - ${PWD}/data/heimdall/config:/config
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "Australia/Melbourne"
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.heimdall.rule=Host(`heimdall.krpros.org`)'
+      - 'traefik.http.routers.heimdall.entryPoints=https'
+      - 'traefik.http.routers.heimdall.tls=true'
+      - 'traefik.http.routers.heimdall.middlewares=authelia-basic@docker'

@@ -1,0 +1,62 @@
+    Changes modified_displayName:
+        Included Updated Properties
+        TargetId.UserType
+        ActorId.ServicePrincipalNames
+        SPN
+        LastDirSyncTime
+        Action Client Name
+        StrongAuthenticationPhoneAppDetail
+        StsRefreshTokensValidFrom
+        StrongAuthenticationUserDetails
+        ProxyAddresses
+        StrongAuthenticationMethod
+        AccountEnabled
+        MailNickname
+        MSExchRemoteRecipientType
+        UserPrincipalName
+        GivenName
+        Surname
+        City
+        Country
+        Department
+        StreetAddress
+        State
+        PostalCode
+        JobTitle
+        Mobile
+        TelephoneNumber
+        LicenseAssignmentDetail
+        CreationType
+        InviteTicket
+        UserState
+        UserStateChangedOn
+        PhysicalDeliveryOfficeName
+        MethodExecutionResult.
+        DisplayName
+        AcceptedAs
+        AcceptedOn
+        AlternativeSecurityId
+        SearchableDeviceKey
+        AssignedLicense
+        AssignedPlan
+        OtherMail
+        ThumbnailPhoto
+    Initiated_appDisplayName_:
+        Microsoft Substrate Management
+        Sailpoint IIQ
+        Office 365 SharePoint Online
+        Azure ESTS Service
+        Signup
+        Microsoft App Access Panel
+        Microsoft password reset service
+        Microsoft Invitation Acceptance Portal
+        Device Registration Service
+        Azure Credential Configuration Endpoint Service
+        M365 License Manager
+        Azure MFA StrongAuthenticationService
+    Initiated_userPrincipalName_:
+        Sync_AADSYNC81P_92bb9c95c3e2@amtrak.onmicrosoft.com
+        fim_password_service@support.onmicrosoft.com
+        IDMAdmin@amtrak.com
+        MFA Service
+        CarillSAdmin@amtrak.com

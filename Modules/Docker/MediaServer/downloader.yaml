@@ -1,0 +1,39 @@
+version: "3.1"
+# qbittorrent - 6881/8080
+# nzbget      - 6789
+############### Torrent Downloader ###############
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=13051
+      - PGID=13000
+      - UMASK=002
+      - TZ=America/Los_Angeles
+      - WEBUI_PORT=8080
+    volumes:
+      - /media/docker/qbittorrent-config:/config
+      - /media/drive/data/torrents:/data/torrents
+    ports:
+      - 8080:8080
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+############### Usenet Downloader ###############
+  nzbget:
+    image: lscr.io/linuxserver/nzbget:latest
+    container_name: nzbget
+    environment:
+      - PUID=13052
+      - PGID=13000
+      - UMASK=002
+      - TZ=America/Los_Angeles
+      #- NZBGET_USER=nzbget #optional
+      #- NZBGET_PASS=tegbzn6789 #optional
+    volumes:
+      - /media/docker/nzbget-config:/config
+      - /media/drive/data/usenet:/data/usenet
+    ports:
+      - 6789:6789
+    restart: unless-stopped

@@ -1,0 +1,73 @@
+---
+version: "3.1"
+networks:
+  default:
+    external:
+      name: proxy
+# Plex - see below
+# Tautulli - 8181
+# Overseer - 5055
+############### Media Server ###############
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=${UID}
+      - PGID=13000
+      - VERSION=docker
+      - PLEX_CLAIM= #PLEX_CLAIM
+      - TZ=America/Los_Angeles
+    ports:
+    #host:contianer
+      - 32400:32400/tcp
+      - 3005:3005/tcp
+      - 8324:8324/tcp
+      - 32469:32469/tcp
+      - 1900:1900/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    healthcheck:
+      test: curl --connect-timeout 15 --max-time 100 --silent --show-error --fail "http://localhost:32400/identity" > /dev/null
+      interval: 1m
+      timeout: 30s
+      retries: 3
+    volumes:
+    #host:container
+      - /media/docker/plex-config:/config
+      - /media/drive/data/media:/data/media
+    restart: unless-stopped
+    networks:
+      - default
+############### Monitor Media Server(Plex) ###############
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    depends_on:
+      - plex
+    environment:
+      - PUID=${UID}
+      - PGID=13000
+      - TZ=America/Los_Angeles
+    volumes:
+      - /media/docker/tautulli-config:/config
+    ports:
+      - 8181:8181
+    restart: unless-stopped
+############### Automate Media Requests ###############
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    volumes:
+      - /apps/docker/overseerr/config:/config
+    environment:
+      - PUID=333
+      - PGID=321
+      - UMASK=002
+    ports:
+      - 5055:5055
+    restart: unless-stopped
+
