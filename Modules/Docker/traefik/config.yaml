@@ -150,8 +150,19 @@ http:
           - url: "https://192.168.0.109"
         passHostHeader: true
 
-#endregion
   middlewares:
+  # Authelia guard
+    auth:
+      forwardauth:
+        # http://AUTHELIA_CONTAINER_NAME:9091/api/verify?rd=https://auth.krpros.org/
+        address: http://authelia:9091/api/verify?rd=https://auth.krpros.org/
+        trustForwardHeader: true
+        authResponseHeaders:
+          - Remote-User
+          - Remote-Groups
+          - Remote-Name
+          - Remote-Email
+
     addprefix-pihole:
       addPrefix:
         prefix: "/admin"
@@ -159,8 +170,18 @@ http:
       redirectScheme:   # Automatically redirect everything to https
         scheme: https   #
 
-    default-headers: #Proxmox
+    # Security headers
+    default-headers:
       headers:
+        customResponseHeaders:
+          X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
+          server: ""
+          X-Forwarded-Proto: "https"
+        sslProxyHeaders:
+          X-Forwarded-Proto: https
+        referrerPolicy: "strict-origin-when-cross-origin"
+        hostsProxyHeaders:
+          - "X-Forwarded-Host"
         frameDeny: true
         sslRedirect: true
         browserXssFilter: true
@@ -168,32 +189,48 @@ http:
         forceSTSHeader: true
         stsIncludeSubdomains: true
         stsPreload: true
-        stsSeconds: 15552000
+        stsSeconds: 63072000 #63072000 or 15552000
         customFrameOptionsValue: SAMEORIGIN
         customRequestHeaders:
           X-Forwarded-Proto: https
 
-    idrac:
-      headers:
-        frameDeny: true
-        sslRedirect: true
-        browserXssFilter: true
-        forceSTSHeader: true
-        stsIncludeSubdomains: true
-        stsSeconds: 15552000
-        customFrameOptionsValue: SAMEORIGIN
-        customRequestHeaders:
-          X-Forwarded-Proto: https
+    #idrac:
+      #headers:
+        #frameDeny: true
+        #sslRedirect: true
+        #browserXssFilter: true
+        #forceSTSHeader: true
+        #stsIncludeSubdomains: true
+        #stsSeconds: 15552000
+        #customFrameOptionsValue: SAMEORIGIN
+        #customRequestHeaders:
+          #X-Forwarded-Proto: https
+    
+    # Only allow local networks
+    #local-ipwhitelist:
+      #ipWhiteList:
+        #sourceRange:
+        #- "10.0.0.0/8"
+        #- "192.168.0.0/16"
+        #- "172.16.0.0/12"
+    # Container requires below label in deployment if only going to be local
+    # traefik.http.routers.APPNAME.middlewares: local-ipwhitelist@file
 
-    default-whitelist:
-      ipWhiteList:
-        sourceRange:
-        - "10.0.0.0/8"
-        - "192.168.0.0/16"
-        - "172.16.0.0/12"
+    #secured:
+      #chain:
+        #middlewares:
+        #- default-whitelist
+        #- default-headers
 
-    secured:
-      chain:
-        middlewares:
-        - default-whitelist
-        - default-headers
+# Only use secure ciphers - https://ssl-config.mozilla.org/#server=traefik&version=2.6.0&config=intermediate&guideline=5.6
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      cipherSuites:
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305

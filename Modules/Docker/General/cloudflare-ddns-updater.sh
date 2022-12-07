@@ -120,4 +120,4 @@ update=$(curl -s -X PATCH "https://api.cloudflare.com/client/v4/zones/$zone_iden
 #    }' $discorduri
 #  fi
 #  exit 0;;
-esac
+#esac

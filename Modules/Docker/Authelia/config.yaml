@@ -6,14 +6,26 @@
 server:
   host: 0.0.0.0
   port: 9091
+  read_buffer_size: 4096     #
+  write_buffer_size: 4096    #
+  enable_pprof: false        #
+  enable_expvars: false      #
+  disable_healthcheck: false #
+  tls:                       #
+    key: ""                  #
+    certificate: ""          #
+
 log:
-  level: debug
+  level: debug  # debug | info
+
 theme: dark #light/gray/dark
 # This secret can also be set using the env variables AUTHELIA_JWT_SECRET_FILE
-jwt_secret: a_very_important_secret #will auto-generate
-default_redirection_url: https://auth.local.krpros.org
+# https://www.allkeysgenerator.com/Random/Security-Encryption-Key-Generator.aspx
+jwt_secret: "C&F)J@NcRfUjWnZr"
+default_redirection_url: https://krpros.org
+
 totp: #time based one-time-password
-  issuer: authelia.com
+  issuer: authelia.com #authelia.com | krpros.org
 
 # duo_api:
 #  hostname: api-123456789.example.com
@@ -23,61 +35,124 @@ totp: #time based one-time-password
 
 #This can be updated to use like an AD setup instead of the file
 authentication_backend:
-  file:
-    path: /config/users_database.yaml
-    password:
-      algorithm: argon2id
-      iterations: 1
-      salt_length: 16
-      parallelism: 8
-      memory: 64
-      
-access_control: #applies to all the routs
-  default_policy: deny
+  # file:
+  #   path: /config/users_database.yaml
+  #   password:
+  #     algorithm: argon2id
+  #     iterations: 1     # 1
+  #     key_length: 32    # NA | 32
+  #     salt_length: 16   # 16
+  #     parallelism: 8    # 
+  #     memory: 1024      # 1024 | 64
+  ldap:
+    implementation: custom # activedirectory | custom
+    url: ldap://192.168.10.20:389 # <scheme>://<address>:<port>
+    start_tls: false #only enable if you know you need it
+    tls:
+      #skip_verify: false # negates validating the certificate of the backend service
+      minimum_version: TLS1.3 # Anything below TLS 1.2 is depricated as of 2022
+    base_dn: DC=example,DC=com # if domain is example.com then it would be DC=example,DC=com
+    additional_users_dn: OU=Users # Can be commented out, but if you want to search a specific OU
+    username_attribute: sAMAccountName # LDAP attribute that maps to the username in Authelia
+    users_filter: (&(|({username_attribute}={input})({mail_attribute}={input}))(objectCategory=person)(objectClass=user)(!userAccountControl:1.2.840.113556.1.4.803:=2)(!pwdLastSet=0))
+    #additional_groups_dn: OU=Groups
+    groups_filter: (&(member:1.2.840.113556.1.4.1941:={dn})(objectClass=group)(objectCategory=group)) # Allows for the use of recursive groups in AD
+    group_name_attribute: cn # LDAP attribute that is used by Authelia to determine the group name
+    mail_attribute: mail # AD attribute to retrieve for password resets
+    display_name_attribute: displayname #Attribute to retrieve which is shown on the Web UI to the user when the log in
+    user: CN=Administrator,CN=Users,DC=example,DC=com # Username for user lookups and password change operations
+    password: P@ssw0rd12345!! # Password for user lookups and password change operations
+                                #-use a password generator(recommended: 64+ characters)
+
+#Organize from least restrictive to the most restrive access controls
+access_control: #applies to all the routes
+  default_policy: deny # deny | one_factor | two_factor
   rules:
     # Rules applied to everyone
-    - domain: public.krpros.org #public website
-      policy: bypass
-    - domain: heimdall.local.example.com
+    - domain: auth.krpros.org
+      policy: one_factor # bypass | one_factor | two_factor
+    - domain: "*.local.krpros.org"
       policy: one_factor
-    - domain: pve1.local.example.com
+    - domain: hiemall.krpros.org
+      subject:
+        - "group:admins"
       policy: two_factor
 
 session:
-  name: authelia_session
+  name: authelia_session #Name of the session cookie
   # This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE
-  secret: unsecure_session_secret
-  expiration: 3600  # 1 hour
-  inactivity: 300  # 5 minutes
+  # Use a password generator(min: 20 characters,recommended: 64+ characters)
+    #-exclude symbols, can only use an alphanumeric string
+  # https://www.allkeysgenerator.com/Random/Security-Encryption-Key-Generator.aspx
+  secret: "9f0A89Sdy2FEMVs34g4fYdZezrgBxXcB41Jed9arswt441yTY1OwdgcHrGbSQPJt" 
+  expiration: 1h  # Period of time before the cookie expires and the session is destroyed
+  inactivity: 5m  # Period of timee before session is destroyed due to inactivity
   domain: krpros.org  # Should match whatever your root protected domain is
+  remember_me_duration: 1M  # Period of time before the 'remember me' box being checked expires
+                            # -1 value will disable this feature
+  same_site: lax # lax | strict | none (lax is default)
+                 # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
 
 #needed only for HA mode
-  # redis:
-  #   host: redis
-  #   port: 6379
-  #   # This secret can also be set using the env variables AUTHELIA_SESSION_REDIS_PASSWORD_FILE
-  #   # password: authelia
+  #  redis:
+  #    host: redis
+  #    port: 6379
+  #    # This secret can also be set using the env variables AUTHELIA_SESSION_REDIS_PASSWORD_FILE
+  #    # password: authelia
 
 #Stop brute force attacks
 regulation:
-  max_retries: 3 #failed attempts
-  find_time: 120 #over a set time
-  ban_time: 300 #ban time
+  max_retries: 3 #failed attempts(0 will disable this feature)
+  find_time: 2m #over a set time
+  ban_time: 10m #ban time
+
+# password_policy:
+#   standard:
+#     enabled: true
+#     min_length: 10
+#     max_length: 32 
+#     require_uppercase: true
+#     require_lowercase: true
+#     require_number: true
+#     require_special: true
+#   zxcvbn:
+#     enabled: true
+#     min_score: 3
 
 storage:
-  encryption_key: a_very_important_secret # Now required
+  # Use a password generator(min: 20 characters,recommended: 64 characters)
+    #-exclude symbols, can only use an alphanumeric string
+  encryption_key: "agc0CUA32KowzzZ6A5IqdnORoDZzf387KLB5FVQyHRA8GMfUNWAjvYGu25lZP1Rh"
+  #local - SQLite3
+  # This method will prevent multiple instances of Authelia since it will be a local file
+  # This method will be stateful
   local:
-    path: /config/db.sqlite3
+    #Path to the local SQLite3 DataBase
+    path: /config/db.sqlite3 
+  #mysql - MySQL
+  # This method will be stateless
+  #mysql:
+  #postgres - PostgresSQL
+  # This method will be stateless
+  #postgres:
 
 #setup a way for users to reset their passwords
 #mailgun, free service
 notifier:
   # smtp:
-  #   username: test
+  #   username: throwawayaccount@email.com
   #   # This secret can also be set using the env variables AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE
-  #   password: password
-  #   host: mail.example.com
-  #   port: 25
-  #   sender: admin@example.com
+  #   password: password for smtp site
+  #   host: mail.example.com # SMTP host
+  #   port: 25 #587 for LDAP
+  #   identifier: local host
+  #   subject: "[Authelia] {title}"
+  #   startup_check_address: test@authelia.com
+  #   disable_require_tls: false
+  #   disable_html_emails: false
+  #   sender: throwawayaccount@email.com
+  #   tls:
+  #     skip_verify: false
+  #     minimum_version: TLS1.2
   filesystem:
     filename: /config/notification.txt

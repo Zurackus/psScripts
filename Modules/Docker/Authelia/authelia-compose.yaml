@@ -5,7 +5,8 @@ services:
     image: authelia/authelia
     container_name: authelia
     volumes:
-      - ./config:/config
+      - ${PWD}/data/authelia/config:/config
+      - ${PWD}/data/authelia/secrets:/secrets
     networks:
       - proxy #match whatever traefik is using
     labels:
@@ -21,8 +22,13 @@ services:
     restart: unless-stopped
     environment:
       - TZ=America/Los_Angeles
+      AUTHELIA_JWT_SECRET_FILE: /secrets/JWT_SECRET
+      AUTHELIA_SESSION_SECRET_FILE: /secrets/SESSION_SECRET
+      AUTHELIA_STORAGE_POSTGRES_PASSWORD_FILE: /secrets/STORAGE_PASSWORD
+      AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /secrets/STORAGE_ENCRYPTION_KEY
     healthcheck:
       disable: true
 networks:
   proxy:
     external: true
+    name: proxy

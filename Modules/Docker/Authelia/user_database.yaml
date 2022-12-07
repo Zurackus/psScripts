@@ -7,11 +7,34 @@
 
 # List of users
 users:
-  username:
-    displayname: "Your Name"
-    # Password is Authelia
+  tkonsonlas:
+    displayname: "Tyler Konsonlas"
     password: "$argon2id$v=19$m=65536,t=1,p=8$cUI4a0E3L1laYnRDUXl3Lw$ZsdsrdadaoVIaVj8NltA8x4qVOzT+/r5GF62/bT8OuAs" 
-    email: you@example.com
+    email: tkonsonlas26@outlook.com
     groups:
       - admins
       - dev
+
+users:
+  tkonsonlas:
+    displayname: "Tyler Konsonlas"
+    password: "$argon2id$v=19$m=65536,t=1,p=8$cUI4a0E3L1laYnRDUXl3Lw$ZsdsrdadaoVIaVj8NltA8x4qVOzT+/r5GF62/bT8OuAs" 
+    email: tkonsonlas26@outlook.com
+    groups:
+      - admins 
+      - dev
+      - moderators
+      - requesters
+
+
+###Sample###
+#users:
+#  username:
+#    displayname: "Your Name"
+#    # docker run --rm authelia/authelia authelia hash-password 'your password'
+#    # Password is Authelia
+#    password: "$argon2id$v=19$m=65536,t=1,p=8$cUI4a0E3L1laYnRDUXl3Lw$ZsdsrdadaoVIaVj8NltA8x4qVOzT+/r5GF62/bT8OuAs" 
+#    email: you@example.com
+#    groups:
+#      - admins
+#      - dev
