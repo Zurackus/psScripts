@@ -1,0 +1,234 @@
+Setup:
+	Recurrence: (1/day/week - Depends on what Amtrak wants)
+	Initialize variable - tagArray
+		-This variable will be used to append and remove tags as needed
+        type: Array
+	    Value: {Initialize with empty value}
+
+Part 1 - Check if all of the users on the VIP watchlist are still members of AAD
+	Run Query and list Results - Get VIP_Users watchlist
+        Subscription: *ProductionSub*
+        Resource Group: LogAnalytics_RG
+        Resource Type: Log Analytics workspace
+        Resource Name: *SentinelWorkspace*
+        Query:
+            _GetWatchlist('VIP_Users')
+            | project UserPrincipalName
+        Time Range: Last 1 hour
+	For each VIP watchlist member
+        ***Not sure the correct method here to grab the individual UserPrincipalName from the previous query*
+	    HTTP - check if the Watchlist user still a member of Azure AD
+            ***Not sure if this is the proper way to call out to AzureAD to verify if a user is still in AzureAD
+            Method: GET
+            URI: https://graph.microsoft.com/v1.0/users/ ***Not sure on the API call needed here
+            Body: XXX
+            Authentication type: Managed identity
+            Managed Identity: XXX
+        Condition - if user is not in Azure AD
+		    True
+			    no action
+		    False
+			    Watchlist - Delete a watchlist item
+                    Subscription ID: XXX
+                    Specify resource Group: XXX
+                    Specify workspace Id: XXX
+                    Specify watchlist alias: VIPUsers
+                    Specify Watchlist Item Id: @{items('For_each_VIP_Watchlist_member')?['_DTItemId']}
+Part 2 - Grab the Group Watchlist
+	Run Query and list Results - VIP_Groups watchlist
+		Subscription: *ProductionSub*
+        Resource Group: LogAnalytics_RG
+        Resource Type: Log Analytics workspace
+        Resource Name: *SentinelWorkspace*
+        Query:
+            _GetWatchlist('VIP_Groups')
+            | project GroupObjectId, Tag
+        Time Range: Last 1 hour
+	For each Group
+        ***not sure how to properly grab the GroupObjectId*
+        ***also, the 'Tag' variable will be needed further down associated with each GroupObjectId*
+	    HTTP - Get Group details
+            Method: GET
+	        URI: https://graph.microsoft.com/v1.0/groups/@{variables('GroupObjectId')}
+	        Authentication type: Managed identity
+	        Managed Identity: XXX
+	        Audience: https://graph.microsoft.com/
+	    HTTP - Get VIP Azure AD Group Members
+	        Method: GET
+	        URI: https://graph.microsoft.com/v1.0/groups/@{variables('VIP Group ID')}/members
+	        Authentication type: Managed identity
+	        Managed Identity: XXX
+	        Audience: https://graph.microsoft.com/
+	    Parse JSON - Get VIP Azure AD Group Members
+            	Content: @{body('HTTP_-_Get_VIP_Azure_AD_Group_Members')}
+                Schema:
+                    {
+                        "properties": {
+                            "@@odata.context": {
+                                "type": "string"
+                            },
+                            "value": {
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "userPrincipalName": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "userPrincipalName",
+                                        "id"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    }
+Part 3 - Check if all group members have been added to VIP Users watchlist
+        For each member of current Group
+            @body('Parse_JSON_-_Get_VIP_Azure_AD_Group_Members')?['value']
+		    Run Query and list Results - VIP_Users watchlist
+		        Subscription: *ProductionSub*
+                Resource Group: LogAnalytics_RG
+                Resource Type: Log Analytics workspace
+                Resource Name: *SentinelWorkspace*
+                Query:
+                    _GetWatchlist('VIP_Users')
+                    | project UserPrincipalName
+                Time Range: Last 1 hour
+            Condition - check if each group member is in VIP Users
+                ***Make a comparison between Get_VIP_Azure_AD_Group_Members and VIP_Users_UserPrincipalNames*
+                ***If Group member IS part of VIP Users then TRUE*
+                ***If Group member is NOT part of VIP Users then FALSE*
+                True
+                    no action
+                False
+                    HTTP - does user have SID
+                        Method: GET
+                        URI: https://graph.microsoft.com/v1.0/users/@{items('For_each_member_of_VIP_Azure_AD_group')?['userPrincipalName']}?$select=onPremisesSecurityIdentifier
+                        Authentication type: Managed identity
+                        Managed Identity: XXX
+                        Audience: https://graph.microsoft.com/
+                    Condition - does user have SID
+                        And body('HTTP_-_does_user_have_SID')?['onPremisesSecurityIdentifier']) is not equal to 'null'
+                        True
+                            Watchlists - Add a new watchlist item - with SID
+                                Subscription ID: XXX
+                                Specify resource Group: XXX
+                                Specify workspace Id: XXX
+                                Specify watchlist alias: VIPUsers
+                                Specify Watchlist Item fields:
+                                    {
+                                    "Tags": "",
+                                    "User AAD Object Id": "@{items('For_each_member_of_VIP_Azure_AD_group')?['id']}",
+                                    "User On-Prem Sid": "@{body('HTTP_-_does_user_have_SID')['onPremisesSecurityIdentifier']}",
+                                    "User Principal Name": "@{items('For_each_member_of_VIP_Azure_AD_group')?['userPrincipalName']}"
+                                    }
+                        False
+                            Watchlists - Add a new watchlist item - without SID
+                                Subscription ID: XXX
+                                Specify resource Group: XXX
+                                Specify workspace Id: XXX
+                                Specify watchlist alias: VIPUsers
+                                Specify Watchlist Item fields:
+                                    {
+                                    "Tags": "",
+                                    "User AAD Object Id": "@{items('For_each_member_of_VIP_Azure_AD_group')?['id']}",
+                                    "User On-Prem Sid": "",
+                                    "User Principal Name": "@{items('For_each_member_of_VIP_Azure_AD_group')?['userPrincipalName']}"
+                                    }
+Part 4 - Add and remove Tag associated with current group to users on VIP Watchlist 
+        For each member of VIP Users
+            @body('Parse_JSON_-_Get_VIP_Azure_AD_Group_Members')?['value']
+		    Run Query and list Results - VIP_Users watchlist
+		        Subscription: *ProductionSub*
+                Resource Group: LogAnalytics_RG
+                Resource Type: Log Analytics workspace
+                Resource Name: *SentinelWorkspace*
+                Query:
+                    _GetWatchlist('VIP_Users')
+                    | project UserPrincipalName, Tags, UserIdentifier, AAD Object ID
+                Time Range: Last 1 hour
+            Condition - check if each VIP User is in current Group
+                ***Make a comparison between Get_VIP_Azure_AD_Group_Members and VIP_Users_UserPrincipalNames*
+                ***If VIP user IS in the Group then TRUE*
+                ***If VIP user is NOT in the Group then FALSE*
+                True
+                    For each Tag within Tags
+                        Split Tags useing ";"
+                            ***Not sure if there are any quirks with grabbing the associated 'Tags' field with the current user in this For each*
+			            Condition - check if group tag is present
+                            ***Check if array contains the associated Tag for the GroupObjectId*
+                            True
+                                no action
+                            False
+                                Append last item
+                                    Name: tagArray
+                                    Valuse: tag
+                                Watchlist - Update an existing Watchlist Item
+                                    Subscription ID: XXX
+                                    Specify resource Group: XXX
+                                    Specify workspace Id: XXX
+                                    Specify watchlist alias: VIPUsers
+                                    Specify Watchlist Item Id: ***User being modified within the VIP Users watchlist***
+                                    Specify Watchlist Item fields:
+                                        {
+                                        "Tags": "***tagArray***",
+                                        "User AAD Object Id": "***variable for current users AAD object ID***",
+                                        "User On-Prem Sid": "***variable for current users AAD object ID***",
+                                        "User Principal Name": "***variable for current users AAD object ID***"
+                                        }
+                False
+                    For each Tag within Tags
+                        Split Tags useing ";"
+                            ***Not sure if there are any quirks with grabbing the associated 'Tags' field with the current user in For each*
+			            Condition - check if group tag is preset
+                            ***Check if array contains the associated Tag for the GroupObjectId
+                            True
+                                ***Function to remove the tag from the array*
+                                
+                                Watchlist - Update an existing Watchlist Item
+                                Subscription ID: XXX
+                                Specify resource Group: XXX
+                                Specify workspace Id: XXX
+                                Specify watchlist alias: VIPUsers
+                                Specify Watchlist Item Id: ***User being modified within the VIP Users watchlist***
+                                Specify Watchlist Item fields:
+                                    {
+                                    "Tags": "***tagArray***",
+                                    "User AAD Object Id": "***variable for current users AAD object ID***",
+                                    "User On-Prem Sid": "***variable for current users AAD object ID***",
+                                    "User Principal Name": "***variable for current users AAD object ID***"
+                                    }
+                            False
+                                no action
+Part 5 - Remove users with empty Tags field
+    ***This task is meant to be outside of the primary 'for each' loop so that it is only ran once at the end of the playbook run
+    Run Query and list Results - VIP_Users watchlist
+        Subscription: *ProductionSub*
+        Resource Group: LogAnalytics_RG
+        Resource Type: Log Analytics workspace
+        Resource Name: *SentinelWorkspace*
+        Query:
+            _GetWatchlist('VIP_Users')
+            | project UserPrincipalName, Tags
+        Time Range: Last 1 hour
+    For each member of VIP Users
+        @body - Grab the results from VIP_Users watchlist
+        Condition - check if each VIP User Tags field is empty
+            ***Check if the 'Tags' field is empty for each user*
+            ***If Tag IS empty then TRUE*
+            ***If Tag is NOT empty then FALSE*
+            True
+                Watchlist - Delete a watchlist item
+                Subscription ID: XXX
+                Specify resource Group: XXX
+                Specify workspace Id: XXX
+                Specify watchlist alias: VIPUsers
+                Specify Watchlist Item Id: ***Watchlist user***
+            False
+                no action
