@@ -1,4 +1,4 @@
-version: "3.1"
+#version: "3.1"
 # qbittorrent - 6881/8080
 # nzbget      - 6789
 ############### Torrent Downloader ###############
@@ -13,8 +13,8 @@ services:
       - TZ=America/Los_Angeles
       - WEBUI_PORT=8080
     volumes:
-      - /media/docker/qbittorrent-config:/config
-      - /media/drive/data/torrents:/data/torrents
+      - /home/docker/docker/qbittorrent-config:/config
+      - /home/docker/data/torrents:/data/torrents
     ports:
       - 8080:8080
       - 6881:6881
@@ -32,8 +32,8 @@ services:
       #- NZBGET_USER=nzbget #optional
       #- NZBGET_PASS=tegbzn6789 #optional
     volumes:
-      - /media/docker/nzbget-config:/config
-      - /media/drive/data/usenet:/data/usenet
+      - /home/docker/docker/nzbget-config:/config
+      - /home/docker/data/usenet:/data/usenet
     ports:
       - 6789:6789
     restart: unless-stopped
