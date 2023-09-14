@@ -27,7 +27,7 @@ sudo useradd lidarr -u 13003
 sudo useradd readarr -u 13004
 sudo useradd prowlarr -u 13005
 sudo useradd bazarr -u 13006
-sudo useradd readarr-ab -u 13007
+#sudo useradd readarr-ab -u 13007 ####
 # Make plex users
 sudo useradd plex -u 13011
 sudo useradd tautulli -u 13012
@@ -40,7 +40,7 @@ sudo usermod -a -G mediacenter sonarr
 sudo usermod -a -G mediacenter radarr
 sudo usermod -a -G mediacenter lidarr
 sudo usermod -a -G mediacenter readarr
-sudo usermod -a -G mediacenter readarr-ab
+#sudo usermod -a -G mediacenter readarr-ab
 sudo usermod -a -G mediacenter prowlarr
 sudo usermod -a -G mediacenter bazarr
 sudo usermod -a -G mediacenter qbittorrent
@@ -55,10 +55,12 @@ sudo useradd traefik -u 13023
 sudo useradd authelia -u 13024
 
 # Make config directories
-sudo mkdir -pv /media/docker/{plex,sonarr,radarr,lidarr,readarr,readarr-ab,prowlarr,qbittorrent,bazarr,nzbget,traefik,authelia,heimdall,tautulli,overseer,watchtower}-config
+sudo mkdir -pv docker/{plex,sonarr,radarr,lidarr,readarr,prowlarr,qbittorrent,bazarr,nzbget,tautulli,overseer}-config
+sudo mkdir -pv docker/{watchtower,heimdall,traefik,authelia}-config
+#traefik,authelia,heimdall
 
 # Make the Media directories
-sudo mkdir -pv /media/drive/data/{torrents,usenet,media}/{tv,movies,music,books}
+sudo mkdir -pv data/{torrents,usenet,media}/{tv,movies,music,books}
 ### Folder Structure ###
 #  data
 #   ├──torrents
@@ -82,27 +84,29 @@ sudo mkdir -pv /media/drive/data/{torrents,usenet,media}/{tv,movies,music,books}
 # https://chmodcommand.com/chmod-775/
 
 # Set the read/write/execute to just owner/group
-sudo chmod -R 770 /media/drive/data/
+sudo chmod -R 775 data
+sudo find data ! -path "data/#recycle" -type d -exec chmod 775 {} +
 # Set group 'mediacenter' as the group for the Directory, switch $ for your admin user(docker)
-sudo chown -R $:mediacenter /media/drive/data
+sudo chown -R docker:mediacenter data
 
 # chown - set owner for config file
-sudo chown -R sonarr /media/docker/sonarr-config
-sudo chown -R radarr /media/docker/radarr-config
-sudo chown -R lidarr /media/docker/lidarr-config
-sudo chown -R readarr /media/docker/readarr-config
-sudo chown -R readarr-ab /media/docker/readarr-ab-config
-sudo chown -R prowlarr /media/docker/prowlarr-config
-sudo chown -R bazarr /media/docker/bazarr-config
+sudo chown -R sonarr docker/sonarr-config
+sudo chown -R radarr docker/radarr-config
+sudo chown -R lidarr docker/lidarr-config
+sudo chown -R readarr docker/readarr-config
+#sudo chown -R readarr-ab docker/readarr-ab-config
+sudo chown -R prowlarr docker/prowlarr-config
+sudo chown -R bazarr docker/bazarr-config
 
-sudo chown -R plex /media/docker/plex-config
-sudo chown -R tautulli /media/docker/tautulli-config
-sudo chown -R overseer /media/docker/overseer-config
+sudo chown -R plex docker/plex-config
+sudo chown -R tautulli docker/tautulli-config
+sudo chown -R overseer docker/overseer-config
 
-sudo chown -R qbittorrent /media/docker/qbittorrent-config
-sudo chown -R nzbget /media/docker/nzbget-config
+sudo chown -R qbittorrent docker/qbittorrent-config
+sudo chown -R nzbget docker/nzbget-config
 
-sudo chown -R watchtower /media/docker/watchtower-config
-sudo chown -R heimdall /media/docker/heimdall-config
-sudo chown -R traefik /media/docker/traefik-config
-sudo chown -R authelia /media/docker/authelia-config
+sudo chown -R watchtower docker/watchtower-config
+sudo chown -R heimdall docker/heimdall-config
+sudo chown -R traefik docker/traefik-config
+sudo chown -R authelia docker/authelia-config
+

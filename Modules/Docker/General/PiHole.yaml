@@ -1,6 +1,11 @@
 version: "3"
 #https://www.youtube.com/watch?v=xtMFcVx3cHU
 # More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
+#sudo mkdir -pv /media/docker/pihole-config
+#sudo mkdir -pv /media/docker/pihole-dnsmasq.d
+#need to run the commands:
+#sudo systemctl stop systemd-resolved
+#sudo systemctl disable systemd-resolved
 services:
   pihole:
     container_name: pihole
@@ -9,19 +14,19 @@ services:
     ports:
       - '53:53/tcp'
       - '53:53/udp'
-      - '67:67/udp' # Only required if you are using Pi-hole as your DHCP server
+      #- '67:67/udp' # Only required if you are using Pi-hole as your DHCP server
       - '80:80/tcp'
     environment:
       TZ: 'American/Los_Angeles'
-      WEBPASSWORD: 'Whatcanido365#'
       PIHOLE_DNS_: 1.1.1.1;1.0.0.1
+      WEBPASSWORD: 'Ie03&z&^Xy5EFpY6'
     # Volumes store your data between container upgrades
     volumes:
-      - './etc-pihole:/etc/pihole'
-      - './etc-dnsmasq.d:/etc/dnsmasq.d'    
+      - '/media/docker/pihole-config:/etc/pihole'
+      - '/media/docker/pihole-dnsmasq.d:/etc/dnsmasq.d'    
     #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
-    cap_add:
-      - NET_ADMIN # Required if you are using Pi-hole as your DHCP server, else not needed
+    #cap_add:
+      #- NET_ADMIN # Required if you are using Pi-hole as your DHCP server, else not needed
     restart: unless-stopped
 
 #docker run -d --name=pihole -e ServerIP=192.168.1.15 -e WEBPASSWORD=Whatcanido365# -e TZ=American/Los_Angeles -e DNS1=127.0.0.1 -e DNS2=1.1.1.1 -p 80:80 -p 53000:53/tcp -p 53000:53/udp -p 443:443 --restart=unless-stopped pihole/pihole:latest

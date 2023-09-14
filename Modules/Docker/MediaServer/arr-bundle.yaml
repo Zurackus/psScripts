@@ -1,4 +1,4 @@
-version: "3.1"
+#version: "3.1"
 # Sonarr      - 8989 
 # Radarr      - 7878
 # Lidarr      - 8686
@@ -18,8 +18,8 @@ services:
       - UMASK=002
       - TZ=America/Los_Angeles
     volumes:
-      - /media/docker/sonarr-config:/config
-      - /media/drive/data:/data
+      - /home/docker/docker/sonarr-config:/config
+      - /home/docker/data:/data
     ports:
       - 8989:8989
     restart: unless-stopped
@@ -34,8 +34,8 @@ services:
       - TZ=America/Los_Angeles
     network_mode: bridge
     volumes:
-      - /media/docker/radarr-config:/config
-      - /media/drive/data:/data
+      - /home/docker/docker/radarr-config:/config
+      - /home/docker/data:/data
     ports:
       - 7878:7878
     restart: unless-stopped
@@ -49,8 +49,8 @@ services:
       - UMASK=002
       - TZ=America/Los_Angeles
     volumes:
-      - /media/docker/lidarr-config:/config
-      - /media/drive/data:/data
+      - /home/docker/docker/lidarr-config:/config
+      - /home/docker/data:/data
     ports:
       - 8686:8686
     restart: unless-stopped
@@ -64,26 +64,26 @@ services:
       - UMASK=002
       - TZ=America/Los_Angeles
     volumes:
-      - /media/docker/readarr-config:/config
-      - /media/drive/data:/data
+      - /home/docker/docker/readarr-config:/config
+      - /home/docker/data:/data
     ports:
       - 8787:8787
     restart: unless-stopped
 ############### Audiobooks ###############
-  readarr-ab:
-    image: lscr.io/linuxserver/readarr:develop
-    container_name: readarr-ab
-    environment:
-      - PUID=13007
-      - PGID=13000
-      - UMASK=002
-      - TZ=America/Los_Angeles
-    volumes:
-      - /media/docker/readarr-ab-config:/config
-      - /media/drive/data:/data
-    ports:
-      - 8788:8787
-    restart: unless-stopped
+#  readarr-ab:
+#    image: lscr.io/linuxserver/readarr:develop
+#    container_name: readarr-ab
+#    environment:
+#      - PUID=13007
+#      - PGID=13000
+#      - UMASK=002
+#      - TZ=America/Los_Angeles
+#    volumes:
+#      - /home/docker/docker/readarr-ab-config:/config
+#      - /home/docker/drive/data:/data
+#    ports:
+#      - 8788:8787
+#    restart: unless-stopped
 ############### Indexer ###############
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:develop
@@ -94,7 +94,7 @@ services:
       - UMASK=002
       - TZ=America/Los_Angeles
     volumes:
-      - /media/docker/prowlarr-config:/config
+      - /home/docker/docker/prowlarr-config:/config
     ports:
       - 9696:9696
     restart: unless-stopped
@@ -108,9 +108,9 @@ services:
       - UMASK=002
       - TZ=America/Los_Angeles
     volumes:
-      - /media/docker/bazarr-config:/config
-      - /media/drive/data/media/movies:/movies
-      - /media/drive/data/media/tv:/tv
+      - /home/docker/docker/bazarr-config:/config
+      - /home/docker/data/media/movies:/movies
+      - /home/docker/data/media/tv:/tv
     ports:
       - 6767:6767
     restart: unless-stopped

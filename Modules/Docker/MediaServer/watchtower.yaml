@@ -8,8 +8,9 @@ services:
     #host:container
       - /var/run/docker.sock:/var/run/docker.sock
     command: --debug --run-once --cleanup
-#    environment:
-#      - WATCHTOWER_CLEANUP: 'TRUE' #--cleanup
-#      - WATCHTOWER_RUN_ONCE: 'TRUE' #--run-once
-#      - WATCHTOWER_DEBUG: 'TRUE' #--debug
-
+    environment:
+      - WATCHTOWER_CLEANUP=TRUE #--cleanup
+      #- WATCHTOWER_RUN_ONCE=TRUE #--run-once
+      - WATCHTOWER_DEBUG=TRUE #--debug
+      - TZ=America/Los_Angeles
+      - WATCHTOWER_SCHEDULE=0 0 0 * * 0 #Run once a week at midnight between Sat/Sun
