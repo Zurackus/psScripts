@@ -102,11 +102,9 @@ Part 3: Check if all of the group members have been added to the VIP Users watch
                 Time Range: Last 1 hour
             Condition - check if each group member is in VIP Users
                 ***Make a comparison between Get_VIP_Azure_AD_Group_Members and VIP_Users_UserPrincipalNames*
-                ***If Group member IS part of VIP Users then TRUE*
-                ***If Group member is NOT part of VIP Users then FALSE*
+                ***If Group member NOT a part of VIP Users then TRUE*
+                ***If Group member IS a part of VIP Users then FALSE*
                 True
-                    no action
-                False
                     HTTP - does user have SID
                         Method: GET
                         URI: https://graph.microsoft.com/v1.0/users/@{items('For_each_member_of_VIP_Azure_AD_group')?['userPrincipalName']}?$select=onPremisesSecurityIdentifier
@@ -141,6 +139,8 @@ Part 3: Check if all of the group members have been added to the VIP Users watch
                                     "User On-Prem Sid": "",
                                     "User Principal Name": "@{items('For_each_member_of_VIP_Azure_AD_group')?['userPrincipalName']}"
                                     }
+                False
+					no action
 Part 4: Add and remove the Tag associated with the current group to the users on the VIP Users watchlist
         For each member of VIP Users
             @body('Parse_JSON_-_Get_VIP_Azure_AD_Group_Members')?['value']
@@ -198,12 +198,12 @@ Part 4: Add and remove the Tag associated with the current group to the users on
                                 Specify watchlist alias: VIPUsers
                                 Specify Watchlist Item Id: ***User being modified within the VIP Users watchlist***
                                 Specify Watchlist Item fields:
-{
-"Tags": "***tagArray***",
-"User AAD Object Id": "***variable for current users AAD object ID***",
-"User On-Prem Sid": "***variable for current users AAD object ID***",
-"User Principal Name": "***variable for current users AAD object ID***"
-}
+                                    {
+                                    "Tags": "***tagArray***",
+                                    "User AAD Object Id": "***variable for current users AAD object ID***",
+                                    "User On-Prem Sid": "***variable for current users AAD object ID***",
+                                    "User Principal Name": "***variable for current users AAD object ID***"
+                                    }
                             False
                                 no action
 Part 5: Remove users with empty Tags field in VIP Users watchlist

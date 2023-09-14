@@ -1,0 +1,675 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "For_each_-_Group_in_VIP_Groups_watchlist": {
+                "actions": {
+                    "For_each_-_Member_of_VIP_Azure_AD_group": {
+                        "actions": {
+                            "Condition_-_member_not_in_VIP_Users_watchlist": {
+                                "actions": {
+                                    "Condition_-_does_user_have_SID": {
+                                        "actions": {
+                                            "Watchlists_-_Add_a_new_Watchlist_Item_-_with_SID": {
+                                                "inputs": {
+                                                    "body": {
+                                                        "Tags": "",
+                                                        "User AAD Object Id": "@{items('For_each_-_Member_of_VIP_Azure_AD_group')?['id']}",
+                                                        "User On-Prem Sid": "@{body('HTTP_-_does_user_have_SID')['onPremisesSecurityIdentifier']}",
+                                                        "User Principal Name": "@{items('For_each_-_Member_of_VIP_Azure_AD_group')?['userPrincipalName']}"
+                                                    },
+                                                    "host": {
+                                                        "connection": {
+                                                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                        }
+                                                    },
+                                                    "method": "put",
+                                                    "path": "/Watchlists/subscriptions/@{encodeURIComponent(parameters('SubscriptionID'))}/resourceGroups/@{encodeURIComponent(parameters('ResourceGroupName'))}/workspaces/@{encodeURIComponent(parameters('MicrosoftSentinelWorkspaceID'))}/watchlists/@{encodeURIComponent('VIPUsers')}/watchlistItem"
+                                                },
+                                                "runAfter": {},
+                                                "type": "ApiConnection"
+                                            }
+                                        },
+                                        "else": {
+                                            "actions": {
+                                                "Watchlists_-_Add_a_new_Watchlist_Item_-_without_SID": {
+                                                    "inputs": {
+                                                        "body": {
+                                                            "Tags": "",
+                                                            "User AAD Object Id": "@{items('For_each_-_Member_of_VIP_Azure_AD_group')?['id']}",
+                                                            "User On-Prem Sid": "",
+                                                            "User Principal Name": "@{items('For_each_-_Member_of_VIP_Azure_AD_group')?['userPrincipalName']}"
+                                                        },
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "put",
+                                                        "path": "/Watchlists/subscriptions/@{encodeURIComponent(parameters('SubscriptionID'))}/resourceGroups/@{encodeURIComponent(parameters('ResourceGroupName'))}/workspaces/@{encodeURIComponent(parameters('MicrosoftSentinelWorkspaceID'))}/watchlists/@{encodeURIComponent('VIPUsers')}/watchlistItem"
+                                                    },
+                                                    "runAfter": {},
+                                                    "type": "ApiConnection"
+                                                }
+                                            }
+                                        },
+                                        "expression": {
+                                            "and": [
+                                                {
+                                                    "not": {
+                                                        "equals": [
+                                                            "",
+                                                            "@null"
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "runAfter": {
+                                            "HTTP_-_does_user_have_SID": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "If"
+                                    },
+                                    "HTTP_-_does_user_have_SID": {
+                                        "inputs": {
+                                            "authentication": {
+                                                "audience": "https://graph.microsoft.com/",
+                                                "type": "ManagedServiceIdentity"
+                                            },
+                                            "method": "GET",
+                                            "uri": "https://graph.microsoft.com/v1.0/users/@{items('For_each_-_Member_of_VIP_Azure_AD_group')?['userPrincipalName']}?$select=onPremisesSecurityIdentifier"
+                                        },
+                                        "runAfter": {},
+                                        "type": "Http"
+                                    }
+                                },
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "equals": [
+                                                "@length(body('Run_query_and_list_results_-_users_-_VIP_Users_watchlist')?['value'])",
+                                                0
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "runAfter": {
+                                    "Run_query_and_list_results_-_users_-_VIP_Users_watchlist": [
+                                        "Succeeded"
+                                    ]
+                                },
+                                "type": "If"
+                            },
+                            "Run_query_and_list_results_-_users_-_VIP_Users_watchlist": {
+                                "inputs": {
+                                    "body": "_GetWatchlist('VIP_Users')\n| project UserPrincipalName",
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['azuremonitorlogs_1']['connectionId']"
+                                        }
+                                    },
+                                    "method": "post",
+                                    "path": "/queryData",
+                                    "queries": {
+                                        "resourcegroups": "CISOSentinelLogAnalytics_RG",
+                                        "resourcename": "CISOLogAnalyticsWorkspace",
+                                        "resourcetype": "Log Analytics Workspace",
+                                        "subscriptions": "2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8",
+                                        "timerange": "Last hour"
+                                    }
+                                },
+                                "runAfter": {},
+                                "type": "ApiConnection"
+                            }
+                        },
+                        "foreach": "@body('Parse_JSON_-_Get_VIP_Azure_AD_Group_members')?['value']",
+                        "runAfter": {
+                            "Parse_JSON_-_Get_VIP_Azure_AD_Group_members": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Foreach"
+                    },
+                    "For_each_-_User_of_VIP_Users_watchlist": {
+                        "actions": {
+                            "Condition_-_check_if_each_VIP_user_is_in_the_current_Group": {
+                                "actions": {
+                                    "Compose_-_Split_current_users_tags_into_a_list": {
+                                        "inputs": "@split(body('Run_query_and_list_results_-_full_-_VIP_Users_watchlist')?['Tags'],';')",
+                                        "runAfter": {},
+                                        "type": "Compose"
+                                    },
+                                    "Condition": {
+                                        "actions": {},
+                                        "else": {
+                                            "actions": {
+                                                "Append_to_array_-_add_current_group_tag": {
+                                                    "inputs": {
+                                                        "name": "tagArray",
+                                                        "value": ""
+                                                    },
+                                                    "runAfter": {},
+                                                    "type": "AppendToArrayVariable"
+                                                },
+                                                "Compose_-_Remove_the_last_character_from_tagString": {
+                                                    "inputs": "@substring(variables('tagString'),0,sub(length(variables('tagString')),1))",
+                                                    "runAfter": {
+                                                        "For_each_-_Build_tagString": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Compose"
+                                                },
+                                                "For_each_-_Build_tagString": {
+                                                    "actions": {
+                                                        "Append_to_string_variable": {
+                                                            "inputs": {
+                                                                "name": "tagString",
+                                                                "value": "@{items('For_each_-_Build_tagString')};"
+                                                            },
+                                                            "runAfter": {},
+                                                            "type": "AppendToStringVariable"
+                                                        }
+                                                    },
+                                                    "foreach": "@variables('tagArray')",
+                                                    "runAfter": {
+                                                        "Append_to_array_-_add_current_group_tag": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Foreach"
+                                                },
+                                                "Watchlists_-_Update_an_existing_Watchlist_Item": {
+                                                    "inputs": {
+                                                        "body": {
+                                                            "Tags": "@{variables('tagString')}",
+                                                            "User AAD Object Id": "",
+                                                            "User On-Prem Sid": "***variable for current users AAD object ID***",
+                                                            "User Principal Name": "***variable for current users AAD object ID***"
+                                                        },
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "put",
+                                                        "path": "/Watchlists/subscriptions/@{encodeURIComponent(parameters('SubscriptionID'))}/resourceGroups/@{encodeURIComponent(parameters('ResourceGroupName'))}/workspaces/@{encodeURIComponent(parameters('MicrosoftSentinelWorkspaceID'))}/watchlists/@{encodeURIComponent('VIPUsers')}/watchlistItem/@{encodeURIComponent(items('For_each_-_User_of_VIP_Users_watchlist'))}"
+                                                    },
+                                                    "runAfter": {
+                                                        "Compose_-_Remove_the_last_character_from_tagString": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ApiConnection"
+                                                }
+                                            }
+                                        },
+                                        "expression": {
+                                            "and": [
+                                                {
+                                                    "contains": [
+                                                        "@variables('tagArray')",
+                                                        ""
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "runAfter": {
+                                            "For_each_-_tag_in_list,_build_array": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "If"
+                                    },
+                                    "For_each_-_tag_in_list,_build_array": {
+                                        "actions": {
+                                            "Append_to_array_-_build_array": {
+                                                "inputs": {
+                                                    "name": "tagArray",
+                                                    "value": ""
+                                                },
+                                                "runAfter": {},
+                                                "type": "AppendToArrayVariable"
+                                            }
+                                        },
+                                        "foreach": "@outputs('Compose_-_Split_current_users_tags_into_a_list')",
+                                        "runAfter": {
+                                            "Compose_-_Split_current_users_tags_into_a_list": [
+                                                "Succeeded"
+                                            ]
+                                        },
+                                        "type": "Foreach"
+                                    }
+                                },
+                                "else": {
+                                    "actions": {
+                                        "Compose": {
+                                            "inputs": "@split(body('Run_query_and_list_results_-_full_-_VIP_Users_watchlist')?['Tags'],';')",
+                                            "runAfter": {},
+                                            "type": "Compose"
+                                        },
+                                        "Condition_2": {
+                                            "actions": {
+                                                "Compose_2": {
+                                                    "description": "@filter(variables('MyArray'), item() != 'Tag')",
+                                                    "inputs": "",
+                                                    "runAfter": {},
+                                                    "type": "Compose"
+                                                },
+                                                "Compose_3": {
+                                                    "inputs": "@substring(variables('tagString'),0,sub(length(variables('tagString')),1))",
+                                                    "runAfter": {
+                                                        "For_each_2": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Compose"
+                                                },
+                                                "For_each_2": {
+                                                    "actions": {
+                                                        "Append_to_string_variable_2": {
+                                                            "inputs": {
+                                                                "name": "tagString",
+                                                                "value": "@{items('For_each_2')};"
+                                                            },
+                                                            "runAfter": {},
+                                                            "type": "AppendToStringVariable"
+                                                        }
+                                                    },
+                                                    "foreach": "@variables('tagArray2')",
+                                                    "runAfter": {
+                                                        "Set_variable": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Foreach"
+                                                },
+                                                "Set_variable": {
+                                                    "inputs": {
+                                                        "name": "tagArray2",
+                                                        "value": "@outputs('Compose_2')"
+                                                    },
+                                                    "runAfter": {
+                                                        "Compose_2": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "SetVariable"
+                                                },
+                                                "Watchlists_-_Update_an_existing_Watchlist_Item_2": {
+                                                    "inputs": {
+                                                        "body": {
+                                                            "Tags": "@{variables('tagString')}",
+                                                            "User AAD Object Id": "",
+                                                            "User On-Prem Sid": "***variable for current users AAD object ID***",
+                                                            "User Principal Name": "***variable for current users AAD object ID***"
+                                                        },
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "put",
+                                                        "path": "/Watchlists/subscriptions/@{encodeURIComponent(parameters('SubscriptionID'))}/resourceGroups/@{encodeURIComponent(parameters('ResourceGroupName'))}/workspaces/@{encodeURIComponent(parameters('MicrosoftSentinelWorkspaceID'))}/watchlists/@{encodeURIComponent('VIPUsers')}/watchlistItem/@{encodeURIComponent(items('For_each_-_User_of_VIP_Users_watchlist'))}"
+                                                    },
+                                                    "runAfter": {
+                                                        "Compose_3": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ApiConnection"
+                                                }
+                                            },
+                                            "expression": {
+                                                "and": [
+                                                    {
+                                                        "equals": [
+                                                            "",
+                                                            ""
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            "runAfter": {
+                                                "For_each": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "If"
+                                        },
+                                        "For_each": {
+                                            "actions": {
+                                                "Append_to_array_variable": {
+                                                    "inputs": {
+                                                        "name": "tagArray",
+                                                        "value": ""
+                                                    },
+                                                    "runAfter": {},
+                                                    "type": "AppendToArrayVariable"
+                                                }
+                                            },
+                                            "foreach": "@outputs('Compose')",
+                                            "runAfter": {
+                                                "Compose": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Foreach"
+                                        }
+                                    }
+                                },
+                                "expression": {
+                                    "and": [
+                                        {
+                                            "not": {
+                                                "equals": [
+                                                    "@length(body('Parse_JSON_-_Get_VIP_Azure_AD_Group_members')?['value'])",
+                                                    0
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                "runAfter": {},
+                                "type": "If"
+                            }
+                        },
+                        "foreach": "@body('Run_query_and_list_results_-_full_-_VIP_Users_watchlist')?['value']",
+                        "runAfter": {
+                            "Run_query_and_list_results_-_full_-_VIP_Users_watchlist": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Foreach"
+                    },
+                    "HTTP_-_Get_Group_details": {
+                        "inputs": {
+                            "authentication": {
+                                "audience": "https://graph.microsoft.com/",
+                                "type": "ManagedServiceIdentity"
+                            },
+                            "method": "GET",
+                            "uri": "https://graph.microsoft.com/v1.0/groups/@{items('For_each_-_Group_in_VIP_Groups_watchlist')}"
+                        },
+                        "runAfter": {},
+                        "type": "Http"
+                    },
+                    "HTTP_-_Get_VIP_Azure_AD_group_members": {
+                        "inputs": {
+                            "authentication": {
+                                "audience": "https://graph.microsoft.com/",
+                                "type": "ManagedServiceIdentity"
+                            },
+                            "method": "GET",
+                            "uri": ""
+                        },
+                        "runAfter": {
+                            "HTTP_-_Get_Group_details": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "Http"
+                    },
+                    "Parse_JSON_-_Get_VIP_Azure_AD_Group_members": {
+                        "inputs": {
+                            "content": "@body('HTTP_-_Get_VIP_Azure_AD_group_members')",
+                            "schema": {
+                                "properties": {
+                                    "@@odata.context": {
+                                        "type": "string"
+                                    },
+                                    "value": {
+                                        "items": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "userPrincipalName": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "userPrincipalName",
+                                                "id"
+                                            ],
+                                            "type": "object"
+                                        },
+                                        "type": "array"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "runAfter": {
+                            "HTTP_-_Get_VIP_Azure_AD_group_members": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ParseJson"
+                    },
+                    "Run_query_and_list_results_-_full_-_VIP_Users_watchlist": {
+                        "inputs": {
+                            "body": "_GetWatchlist('VIP_Users')\n| project UserPrincipalName, Tags, UserIdentifier, AADObjectId",
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azuremonitorlogs_1']['connectionId']"
+                                }
+                            },
+                            "method": "post",
+                            "path": "/queryData",
+                            "queries": {
+                                "resourcegroups": "CISOSentinelLogAnalytics_RG",
+                                "resourcename": "CISOLogAnalyticsWorkspace",
+                                "resourcetype": "Log Analytics Workspace",
+                                "subscriptions": "2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8",
+                                "timerange": "Last hour"
+                            }
+                        },
+                        "runAfter": {
+                            "For_each_-_Member_of_VIP_Azure_AD_group": [
+                                "Succeeded"
+                            ]
+                        },
+                        "type": "ApiConnection"
+                    }
+                },
+                "foreach": "@body('Run_query_and_list_results_-_VIP_Groups_watchlist')?['value']",
+                "runAfter": {
+                    "Run_query_and_list_results_-_VIP_Groups_watchlist": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            },
+            "For_each_3": {
+                "actions": {
+                    "Condition_-_Check_if_the_Tags_field_is_empty": {
+                        "actions": {
+                            "Watchlists_-_Delete_a_Watchlist_Item": {
+                                "inputs": {
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                        }
+                                    },
+                                    "method": "delete",
+                                    "path": "/Watchlists/subscriptions/@{encodeURIComponent(parameters('SubscriptionID'))}/resourceGroups/@{encodeURIComponent(parameters('ResourceGroupName'))}/workspaces/@{encodeURIComponent(parameters('MicrosoftSentinelWorkspaceID'))}/watchlists/@{encodeURIComponent('VIPUsers')}/watchlistItem/@{encodeURIComponent('')}"
+                                },
+                                "runAfter": {},
+                                "type": "ApiConnection"
+                            }
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "@body('Run_query_and_list_results_-_VIP_Users_watchlist')?['value']",
+                                        "@null"
+                                    ]
+                                }
+                            ]
+                        },
+                        "runAfter": {},
+                        "type": "If"
+                    }
+                },
+                "foreach": "@body('Run_query_and_list_results_-_VIP_Users_watchlist')?['value']",
+                "runAfter": {
+                    "Run_query_and_list_results_-_VIP_Users_watchlist": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            },
+            "Initialize_variable_-_tagArray": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "tagArray",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_tagArray2": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "tagArray2",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_tagArray": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Initialize_variable_-_tagString": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "tagString",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "Initialize_variable_-_tagArray2": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "Run_query_and_list_results_-_VIP_Groups_watchlist": {
+                "inputs": {
+                    "body": "_GetWatchlist('VIP_Groups')\n| project GroupObjectId, Tag",
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuremonitorlogs_1']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/queryData",
+                    "queries": {
+                        "resourcegroups": "CISOSentinelLogAnalytics_RG",
+                        "resourcename": "CISOLogAnalyticsWorkspace",
+                        "resourcetype": "Log Analytics Workspace",
+                        "subscriptions": "2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8",
+                        "timerange": "Last hour"
+                    }
+                },
+                "runAfter": {
+                    "Initialize_variable_-_tagString": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            },
+            "Run_query_and_list_results_-_VIP_Users_watchlist": {
+                "inputs": {
+                    "body": "_GetWatchlist('VIP_Users')\n| project UserPrincipalName, Tags",
+                    "host": {
+                        "connection": {
+                            "name": "@parameters('$connections')['azuremonitorlogs_1']['connectionId']"
+                        }
+                    },
+                    "method": "post",
+                    "path": "/queryData",
+                    "queries": {
+                        "resourcegroups": "CISOSentinelLogAnalytics_RG",
+                        "resourcename": "CISOLogAnalyticsWorkspace",
+                        "resourcetype": "Log Analytics Workspace",
+                        "subscriptions": "2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8",
+                        "timerange": "Last hour"
+                    }
+                },
+                "runAfter": {
+                    "For_each_-_Group_in_VIP_Groups_watchlist": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ApiConnection"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            },
+            "MicrosoftSentinelWorkspaceID": {
+                "defaultValue": "bffa69a3-7691-4475-b542-eabecc36ff24",
+                "type": "String"
+            },
+            "MicrosoftSentinelWorkspaceName": {
+                "defaultValue": "CISOLogAnalyticsWorkspace",
+                "type": "String"
+            },
+            "ResourceGroupName": {
+                "defaultValue": "cisosentinelloganalytics_rg",
+                "type": "String"
+            },
+            "SubscriptionID": {
+                "defaultValue": "2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8",
+                "type": "String"
+            }
+        },
+        "triggers": {
+            "Recurrence": {
+                "evaluatedRecurrence": {
+                    "frequency": "Day",
+                    "interval": 1
+                },
+                "recurrence": {
+                    "frequency": "Day",
+                    "interval": 1
+                },
+                "type": "Recurrence"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "azuremonitorlogs_1": {
+                    "connectionId": "/subscriptions/2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8/resourceGroups/CISOSentinelLogAnalytics_RG/providers/Microsoft.Web/connections/azuremonitorlogs-7",
+                    "connectionName": "azuremonitorlogs-7",
+                    "id": "/subscriptions/2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8/providers/Microsoft.Web/locations/eastus2/managedApis/azuremonitorlogs"
+                },
+                "azuresentinel": {
+                    "connectionId": "/subscriptions/2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8/resourceGroups/CISOSentinelLogAnalytics_RG/providers/Microsoft.Web/connections/azuresentinel-19",
+                    "connectionName": "azuresentinel-19",
+                    "id": "/subscriptions/2b1ac3c6-a8f3-4c31-aed6-560d2ad57fd8/providers/Microsoft.Web/locations/eastus2/managedApis/azuresentinel"
+                }
+            }
+        }
+    }
+}
