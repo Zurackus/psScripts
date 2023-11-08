@@ -21,7 +21,7 @@ foreach ($jsonFile in $jsonFiles) {
     $jsonContent | Out-Null
 
     # Form the new file name by adding '20230726_' to the front
-    $newFileName = "20230920_$displayName.json"
+    $newFileName = "20231018_$displayName.json"
     $newFilePath = Join-Path -Path $folderPath -ChildPath $newFileName
 
     # Rename the JSON file with the new file name
