@@ -27,6 +27,7 @@ $resources | ForEach-Object {
     #Build URL
     $resourceName = $_.Name
     $resourceIdLower = $_.id.ToLower()
+    Write-Host 'Found API Connector:'$resourceName
     #Reference below for the API
     #Couldn't find reference to uri, ran below command to view data available
     #Can also run the following command to see a live example: az rest --method get --uri <URL>

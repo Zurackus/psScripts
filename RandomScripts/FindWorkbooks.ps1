@@ -23,52 +23,34 @@ Write-Host ''
 Write-Host ''
 #Grabbing all of the logic apps within particular Resource Group
 Write-Host 'Looking up Logic Apps'
-$resources = Get-AzResource -ResourceGroupName $resourceGroupName -ResourceType Microsoft.Logic/workflows
+$resources = Get-AzResource -ResourceGroupName $resourceGroupName -ResourceType Microsoft.Insights/workbooks
 $resources | ForEach-Object {
 
     #Build URL
     $resourceName = $_.Name
     $resourceIdLower = $_.id.ToLower()
-    Write-Host 'Found Playbook:'$resourceName
     #Reference below for the API
-    #https://learn.microsoft.com/en-us/rest/api/logic/workflows/get?view=rest-logic-2016-06-01&tabs=HTTP
+    #https://learn.microsoft.com/en-us/rest/api/application-insights/workbooks/get?view=rest-application-insights-2021-08-01&tabs=HTTP
     #Can also run the following command to see a live example: az rest --method get --uri <URL>
-    $resourceUrl = $resourceGroupPath + '/providers/Microsoft.Logic/workflows/' + $resourceName + '?api-version=2018-07-01-preview'
+    $resourceUrl = $resourceGroupPath + '/providers/microsoft.insights/workbooks/' + $resourceName + '?api-version=2022-04-01'
 
     #Get Logic App Content
     $resourceJson = az rest --method get --uri $resourceUrl
     #Base calls to the JSON information
     $resourceJsonText = $resourceJson | ConvertFrom-Json
     $resourceProperties = $resourceJsonText.properties
-    $resourceParameters = $resourceJsonText.properties.parameters
-    #Searching under 'properties' for field containing exactly '$connections' not a variable
-    $resourceConnections = $resourceParameters.psobject.properties.Where({$_.name -eq '$connections'}).value
-    $resourceConnectionValue = $resourceConnections.value
-
-    $connectors = ""
-    #Iterate through the connectors
-    $resourceConnectionValue.psobject.properties | ForEach-Object{
-
-        $connection = $_.Value
-        #Not completely needed, but confirms the field isn't empty before appending to $connectors
-        if($connection -ne $null)
-        {
-            #Write-Host 'Logic App: ' $resourceName ' uses connector: name='$connection.connectionName
-            $connectionName = $connection.connectionName
-            $connectors += "$connectionName,"
-        }
-    }
-
+    Write-Host 'Found Workbook:'$resourceProperties.displayName
     #Extracting all of the desired information per Logic App
     $azureConnector = New-Object -TypeName psobject
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Id' -Value $resourceJsonText.id
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Name' -Value $resourceJsonText.name
-    $azureConnector | Add-Member -MemberType NoteProperty -Name 'State' -Value $resourceProperties.state
-    $azureConnector | Add-Member -MemberType NoteProperty -Name 'ChangedTime' -Value $resourceProperties.changedTime
-    $azureConnector | Add-Member -MemberType NoteProperty -Name 'CreatedTime' -Value $resourceProperties.createdTime
-    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Connectors' -Value $connectors
-    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Triggers' -Value $resourceProperties.definition.triggers
-    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Actions' -Value $resourceProperties.definition.actions
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'DisplayName' -Value $resourceProperties.displayName
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Category' -Value $resourceProperties.category
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'TimeModified' -Value $resourceProperties.timeModified
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'SourceId' -Value $resourceProperties.sourceId
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'UserId' -Value $resourceProperties.userId
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Description' -Value $resourceProperties.description
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Tags' -Value $resourceJsonText.tags
     #Loading the variables into the dictionary with the 'id' as the key value
     $connectorDictionary.Add($resourceIdLower, $azureConnector)
 }
@@ -77,7 +59,7 @@ $resources | ForEach-Object {
 Write-Host ''
 Write-Host ''
 Write-Host ''
-Write-Host 'Disabled Playbooks'
+Write-Host '<> Workbooks'
 $connectorDictionary.Values | ForEach-Object{
     $azureConnector = $_
     #Can use this to take action based on a field
@@ -98,5 +80,5 @@ $connectorDictionary.Values | ForEach-Object{
 }
 
 #Exporting all of the data in the working directory, $pwd grabs the full path of your working directory
-$csvFilePath = Join-Path -Path $pwd -ChildPath "Playbooks.csv"
+$csvFilePath = Join-Path -Path $pwd -ChildPath "Workbook.csv"
 $connectorDictionary.Values | Export-Csv -Path $csvFilePath
