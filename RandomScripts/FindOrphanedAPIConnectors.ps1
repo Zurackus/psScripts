@@ -47,6 +47,7 @@ $resources | ForEach-Object {
     #Extracting all of the desired information per API Connector
     $azureConnector = New-Object -TypeName psobject
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'IsUsed' -Value 'FALSE'
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'ToBeDeleted' -Value 'FALSE'
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Id' -Value $resourceJsonText.id
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Name' -Value $resourceJsonText.name
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Connector' -Value $resourceProperties.api.displayName
@@ -91,7 +92,7 @@ $resources | ForEach-Object {
         #Verify the value isn't empty
         if($connection -ne $null)
         {
-            Write-Host 'Logic App: ' $logicAppName ' uses connector: name='$connection.connectionName
+            Write-Host 'Logic App: ' $logicAppName ' uses connector: '$connection.connectionName
             #Grabbing the connectorid in lowercase for comparison
             $connectorIdLower = $connection.connectionId.ToLower()
             #Check if connector is in the connector dictionary
@@ -114,16 +115,16 @@ $resources | ForEach-Object {
 Write-Host ''
 Write-Host ''
 Write-Host ''
-Write-Host 'Orphaned API Connectors'
+Write-Host 'API Connector Results'
 $connectorDictionary.Values | ForEach-Object{
     $azureConnector = $_
     #Can use this to take action based on a field
     Write-Host $azureConnector.Name ' : ' $azureConnector.IsUsed
-    if($azureConnector.IsUsed -eq 'FALSE')
+    if($azureConnector.State -eq 'Error' -and [DateTime]::Parse($azureConnector.ChangedTime) -lt [DateTime]::Parse('5/1/2023'))
     {   #Leaving as a proof of concept to verify the selected field is returning as desired
         #Recommend running at least once before pushing changes, like deletions
-        Write-Host $azureConnector.Name ' : is an orphan'
-        
+        Write-Host $azureConnector.Name ' : would be deleted'
+        $azureConnector.ToBeDeleted = 'Deleted'        
         ###Used below to export full JSON template of resource###
         #Replace value in $pwd\<value> with folder name of choice, $pwd grabs the full path of your working directory
         #$jsonPath = Join-Path -Path "$pwd\api-arm" -ChildPath "$($azureConnector.Name).json"

@@ -62,6 +62,7 @@ $resources | ForEach-Object {
     #Extracting all of the desired information per Logic App
     $azureConnector = New-Object -TypeName psobject
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Id' -Value $resourceJsonText.id
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'ToBeDeleted' -Value 'FALSE'
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Name' -Value $resourceJsonText.name
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'State' -Value $resourceProperties.state
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'ChangedTime' -Value $resourceProperties.changedTime
@@ -81,19 +82,21 @@ Write-Host 'Disabled Playbooks'
 $connectorDictionary.Values | ForEach-Object{
     $azureConnector = $_
     #Can use this to take action based on a field
-    if($azureConnector.State -eq 'Disabled')
+    Write-Host $azureConnector.Name
+    if($azureConnector.State -eq 'Disabled' -and [DateTime]::Parse($azureConnector.ChangedTime) -lt [DateTime]::Parse('5/1/2023'))
     {   #Leaving as a proof of concept to verify the selected field is returning as desired
         #Recommend running at least once before pushing changes, like deletions
-        Write-Host $azureConnector.Name ' : is Disabled'
+        Write-Host $azureConnector.Name ' : would be deleted'
+        $azureConnector.ToBeDeleted = 'Deleted'
         
         ###Used below to export full JSON template of resource###
         #Replace value in $pwd\<value> with folder name of choice, $pwd grabs the full path of your working directory
-        #$jsonPath = Join-Path -Path "$pwd\api-arm" -ChildPath "$($azureConnector.Name).json"
+        #$jsonPath = Join-Path -Path "$pwd\api-Playbooks" -ChildPath "$($azureConnector.Name).json"
         #az group export --resource-group $resourceGroupName --resource-ids $azureConnector.Id > $jsonPath
         
         ###Use the below to delete a resource###
         #Remove-AzResource -ResourceId $azureConnector.Id -Force
-        #Write-Host $azureConnector.Id ' : has been deleted'
+        #Write-Host $azureConnector.Name ' : has been deleted'
     }
 }
 
