@@ -34,12 +34,16 @@ $resources | ForEach-Object {
     #https://learn.microsoft.com/en-us/rest/api/logic/workflows/get?view=rest-logic-2016-06-01&tabs=HTTP
     #Can also run the following command to see a live example: az rest --method get --uri <URL>
     $resourceUrl = $resourceGroupPath + '/providers/Microsoft.Logic/workflows/' + $resourceName + '?api-version=2018-07-01-preview'
+    $resourceUrlRun = $resourceGroupPath + '/providers/Microsoft.Logic/workflows/' + $resourceName + '/runs?api-version=2016-06-01&$top=1'
 
     #Get Logic App Content
     $resourceJson = az rest --method get --uri $resourceUrl
+    $resourceJsonRun = az rest --method get --uri $resourceUrlRun
     #Base calls to the JSON information
     $resourceJsonText = $resourceJson | ConvertFrom-Json
+    $resourceJsonTextRun = $resourceJsonRun | ConvertFrom-Json
     $resourceProperties = $resourceJsonText.properties
+    $resourcePropertiesRun = $resourceJsonTextRun.value.properties
     $resourceParameters = $resourceJsonText.properties.parameters
     #Searching under 'properties' for field containing exactly '$connections' not a variable
     $resourceConnections = $resourceParameters.psobject.properties.Where({$_.name -eq '$connections'}).value
@@ -70,10 +74,14 @@ $resources | ForEach-Object {
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Connectors' -Value $connectors
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Triggers' -Value $resourceProperties.definition.triggers
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Actions' -Value $resourceProperties.definition.actions
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'lastrunStart' -Value $resourcePropertiesRun.startTime
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'lastrunEnd' -Value $resourcePropertiesRun.endTime
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'lastrunStatus' -Value $resourcePropertiesRun.status
+
     #Loading the variables into the dictionary with the 'id' as the key value
     $connectorDictionary.Add($resourceIdLower, $azureConnector)
 }
-
+<#
 #Optional section where an action can be pushed based on one or more of the extracted fields
 Write-Host ''
 Write-Host ''
@@ -87,7 +95,7 @@ $connectorDictionary.Values | ForEach-Object{
     {   #Leaving as a proof of concept to verify the selected field is returning as desired
         #Recommend running at least once before pushing changes, like deletions
         Write-Host $azureConnector.Name ' : would be deleted'
-        $azureConnector.ToBeDeleted = 'Deleted'
+        $azureConnector.ToBeDeleted = 'TRUE'
         
         ###Used below to export full JSON template of resource###
         #Replace value in $pwd\<value> with folder name of choice, $pwd grabs the full path of your working directory
@@ -99,7 +107,7 @@ $connectorDictionary.Values | ForEach-Object{
         #Write-Host $azureConnector.Name ' : has been deleted'
     }
 }
-
+#>
 #Exporting all of the data in the working directory, $pwd grabs the full path of your working directory
 $csvFilePath = Join-Path -Path $pwd -ChildPath "Playbooks.csv"
 $connectorDictionary.Values | Export-Csv -Path $csvFilePath
