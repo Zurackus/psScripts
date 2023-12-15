@@ -110,7 +110,7 @@ $resources | ForEach-Object {
         }
    }
 }
-
+<#
 #Optional section where an action can be pushed based on one or more of the extracted fields
 Write-Host ''
 Write-Host ''
@@ -135,7 +135,7 @@ $connectorDictionary.Values | ForEach-Object{
         #Write-Host $azureConnector.Id ' : has been deleted'
     }
 }
-
+#>
 #Exporting all of the data in the working directory, $pwd grabs the full path of your working directory
 $csvFilePath = Join-Path -Path $pwd -ChildPath "OrphanedConnectors.csv"
 $connectorDictionary.Values | Export-Csv -Path $csvFilePath
