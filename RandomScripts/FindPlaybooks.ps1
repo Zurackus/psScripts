@@ -34,6 +34,8 @@ $resources | ForEach-Object {
     #https://learn.microsoft.com/en-us/rest/api/logic/workflows/get?view=rest-logic-2016-06-01&tabs=HTTP
     #Can also run the following command to see a live example: az rest --method get --uri <URL>
     $resourceUrl = $resourceGroupPath + '/providers/Microsoft.Logic/workflows/' + $resourceName + '?api-version=2018-07-01-preview'
+    #Reference below for the API
+    #https://learn.microsoft.com/en-us/rest/api/logic/workflow-runs/list?view=rest-logic-2016-06-01&tabs=HTTP
     $resourceUrlRun = $resourceGroupPath + '/providers/Microsoft.Logic/workflows/' + $resourceName + '/runs?api-version=2016-06-01&$top=1'
 
     #Get Logic App Content
