@@ -58,9 +58,10 @@ foreach ($item in $resources.value) {
 
     #Extracting all of the desired information per Logic App
     $azureConnector = New-Object -TypeName psobject
-    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Id' -Value $resourceJsonText.id
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'FullId' -Value $resourceJsonText.id
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'ToBeDeleted' -Value 'FALSE'
-    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Name' -Value $resourceJsonText.name
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Id' -Value $resourceJsonText.name
+    $azureConnector | Add-Member -MemberType NoteProperty -Name 'Name' -Value $resourceId
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'Order' -Value $resourceProperties.order
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'IsEnabled' -Value $resourceProperties.triggeringLogic.isEnabled
     $azureConnector | Add-Member -MemberType NoteProperty -Name 'TriggersOn' -Value $resourceProperties.triggeringLogic.triggersOn
