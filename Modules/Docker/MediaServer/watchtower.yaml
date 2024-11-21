@@ -1,11 +1,11 @@
-version: "3"
+# version: "3"
 ############### Automate Updates ###############
 #https://containrrr.dev/watchtower/
 services:
   watchtower:
-    image: containrrr/watchtower
+    image: containrrr/watchtower:latest
+    container_name: watchtower
     volumes:
-    #host:container
       - /var/run/docker.sock:/var/run/docker.sock
     command: --debug --run-once --cleanup
     environment:

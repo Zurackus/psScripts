@@ -27,7 +27,7 @@ sudo useradd lidarr -u 13003
 sudo useradd readarr -u 13004
 sudo useradd prowlarr -u 13005
 sudo useradd bazarr -u 13006
-#sudo useradd readarr-ab -u 13007 ####
+sudo useradd readarr-ab -u 13007
 # Make plex users
 sudo useradd plex -u 13011
 sudo useradd tautulli -u 13012
@@ -40,9 +40,10 @@ sudo usermod -a -G mediacenter sonarr
 sudo usermod -a -G mediacenter radarr
 sudo usermod -a -G mediacenter lidarr
 sudo usermod -a -G mediacenter readarr
-#sudo usermod -a -G mediacenter readarr-ab
+sudo usermod -a -G mediacenter readarr-ab
 sudo usermod -a -G mediacenter prowlarr
 sudo usermod -a -G mediacenter bazarr
+
 sudo usermod -a -G mediacenter qbittorrent
 sudo usermod -a -G mediacenter nzbget
 sudo usermod -a -G mediacenter plex
@@ -60,30 +61,39 @@ sudo mkdir -pv docker/{watchtower,heimdall,traefik,authelia}-config
 #traefik,authelia,heimdall
 
 # Make the Media directories
-sudo mkdir -pv data/{torrents,usenet,media}/{tv,movies,music,books}
+sudo mkdir -pv data/{torrents/{movies,music,books,audiobooks,tv},usenet/{incomplete,complete/{movies,music,books,audiobooks,tv}},media/{movies,music,books,audiobooks,tv}}
 ### Folder Structure ###
 #  data
 #   ├──torrents
 #   │  ├── movies
 #   │  ├── music
 #   |  ├── books
+#   |  ├── audiobooks
 #   │  └── tv
 #   ├──usenet
-#   │  ├── movies
-#   │  ├── music
-#   │  ├── books
-#   │  └── tv
+#   │  ├── incomplete
+#   │  └── complete
+#   │       ├── movies
+#   │       ├── music
+#   │       ├── books
+#   |       ├── audiobooks
+#   │       └── tv
 #   └──media
 #       ├── movies
 #       ├── music
 #       ├── books
+#       |── audiobooks
 #       └── tv
 
 # Set permissions
 # -R Recursively push the permissions to all files below
 # https://chmodcommand.com/chmod-775/
 
+### 775 Permissions ###
 # Set the read/write/execute to just owner/group
+# Owner: Read, write, and execute permissions.
+# Group: Read, write, and execute permissions.
+# Others: Read and execute permissions.
 sudo chmod -R 775 data
 sudo find data ! -path "data/#recycle" -type d -exec chmod 775 {} +
 # Set group 'mediacenter' as the group for the Directory, switch $ for your admin user(docker)
@@ -94,7 +104,7 @@ sudo chown -R sonarr docker/sonarr-config
 sudo chown -R radarr docker/radarr-config
 sudo chown -R lidarr docker/lidarr-config
 sudo chown -R readarr docker/readarr-config
-#sudo chown -R readarr-ab docker/readarr-ab-config
+sudo chown -R readarr-ab docker/readarr-ab-config
 sudo chown -R prowlarr docker/prowlarr-config
 sudo chown -R bazarr docker/bazarr-config
 

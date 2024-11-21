@@ -13,104 +13,104 @@ services:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     environment:
-      - PUID=13001
-      - PGID=13000
-      - UMASK=002
+      - PUID=13001 #UserID
+      - PGID=13000 #GroupID
+      - UMASK=002 #File permissions
       - TZ=America/Los_Angeles
     volumes:
-      - /home/docker/docker/sonarr-config:/config
-      - /home/docker/data:/data
+      - /home/docker/docker/sonarr-config:/config #Sonarr Config
+      - /home/docker/data:/data #Media Library
     ports:
-      - 8989:8989
+      - 8989:8989 #Connect over htts://localhost:8989
     restart: unless-stopped
 ############### TV Series ###############
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     environment:
-      - PUID=13002
-      - PGID=13000
-      - UMASK=002
+      - PUID=13002 #UserID
+      - PGID=13000 #GroupID
+      - UMASK=002 #File permissions
       - TZ=America/Los_Angeles
-    network_mode: bridge
+    # network_mode: bridge
     volumes:
-      - /home/docker/docker/radarr-config:/config
-      - /home/docker/data:/data
+      - /home/docker/docker/radarr-config:/config #Radarr Config
+      - /home/docker/data:/data #Media Library
     ports:
-      - 7878:7878
+      - 7878:7878 #Connect over htts://localhost:7878
     restart: unless-stopped
 ############### Music ###############
   lidarr:
     image: lscr.io/linuxserver/lidarr:latest
     container_name: lidarr
     environment:
-      - PUID=13003
-      - PGID=13000
-      - UMASK=002
+      - PUID=13003 #UserID
+      - PGID=13000 #GroupID
+      - UMASK=002 #File permissions
       - TZ=America/Los_Angeles
     volumes:
-      - /home/docker/docker/lidarr-config:/config
-      - /home/docker/data:/data
+      - /home/docker/docker/lidarr-config:/config #Lidarr Config
+      - /home/docker/data:/data #Media Library
     ports:
-      - 8686:8686
+      - 8686:8686 #Connect over htts://localhost:8686
     restart: unless-stopped
 ############### Ebooks ###############
   readarr:
     image: lscr.io/linuxserver/readarr:develop
     container_name: readarr
     environment:
-      - PUID=13004
-      - PGID=13000
-      - UMASK=002
+      - PUID=13004 #UserID
+      - PGID=13000 #GroupID
+      - UMASK=002 #File permissions
       - TZ=America/Los_Angeles
     volumes:
-      - /home/docker/docker/readarr-config:/config
-      - /home/docker/data:/data
+      - /home/docker/docker/readarr-config:/config #Readarr Config
+      - /home/docker/data:/data #Media Library
     ports:
-      - 8787:8787
+      - 8787:8787 #Connect over htts://localhost:8787
     restart: unless-stopped
 ############### Audiobooks ###############
-#  readarr-ab:
-#    image: lscr.io/linuxserver/readarr:develop
-#    container_name: readarr-ab
-#    environment:
-#      - PUID=13007
-#      - PGID=13000
-#      - UMASK=002
-#      - TZ=America/Los_Angeles
-#    volumes:
-#      - /home/docker/docker/readarr-ab-config:/config
-#      - /home/docker/drive/data:/data
-#    ports:
-#      - 8788:8787
-#    restart: unless-stopped
+  readarr-ab:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr-ab
+    environment:
+      - PUID=13007 #UserID
+      - PGID=13000 #GroupID
+      - UMASK=002 #File permissions
+      - TZ=America/Los_Angeles
+    volumes:
+      - /home/docker/docker/readarr-ab-config:/config #Readarr Config
+      - /home/docker/data:/data #Media Library
+    ports:
+      - 8788:8787 #Connect over htts://localhost:8788
+    restart: unless-stopped
 ############### Indexer ###############
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:develop
     container_name: prowlarr
     environment:
-      - PUID=13005
-      - PGID=13000
-      - UMASK=002
+      - PUID=13005 #UserID
+      - PGID=13000 #GroupID
+      - UMASK=002 #File permissions
       - TZ=America/Los_Angeles
     volumes:
-      - /home/docker/docker/prowlarr-config:/config
+      - /home/docker/docker/prowlarr-config:/config #Prowlarr Config
     ports:
-      - 9696:9696
+      - 9696:9696 #Connect over htts://localhost:9696
     restart: unless-stopped
 ############### Subtitles ###############
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
     container_name: bazarr
     environment:
-      - PUID=13006
-      - PGID=13000
-      - UMASK=002
+      - PUID=13006 #UserID
+      - PGID=13000 #GroupID
+      - UMASK=002 #File permissions
       - TZ=America/Los_Angeles
     volumes:
-      - /home/docker/docker/bazarr-config:/config
-      - /home/docker/data/media/movies:/movies
-      - /home/docker/data/media/tv:/tv
+      - /home/docker/docker/bazarr-config:/config #Bazarr Config
+      - /home/docker/data/media/movies:/movies #Movies
+      - /home/docker/data/media/tv:/tv #TV Series
     ports:
-      - 6767:6767
+      - 6767:6767 #Connect over htts://localhost:6767
     restart: unless-stopped
